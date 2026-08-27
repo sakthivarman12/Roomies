@@ -2,20 +2,38 @@
   "expo": {
     "name": "Roomies",
     "slug": "Roomies",
+    "scheme": "roomies",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.roomies.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Roomies uses your camera to take photos and videos to share in chat and memories.",
+        "NSMicrophoneUsageDescription": "Roomies uses your microphone to record voice messages and videos.",
+        "NSPhotoLibraryUsageDescription": "Roomies needs access to your photo library to share photos and videos with your roommates.",
+        "NSPhotoLibraryAddUsageDescription": "Roomies can save photos and videos to your library when you download memories."
+      }
     },
     "android": {
+      "package": "com.roomies.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0B0D12",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO",
+        "POST_NOTIFICATIONS"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -25,7 +43,34 @@
       "expo-router",
       "expo-status-bar",
       "expo-image",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Roomies uses your camera to take photos and videos to share with your roommates.",
+          "microphonePermission": "Roomies uses your microphone to record videos and voice messages.",
+          "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Roomies needs access to your photos to share memories and chat media."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Roomies uses your microphone to record voice messages."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#7C6CFF"
+        }
+      ]
     ]
   }
 }
