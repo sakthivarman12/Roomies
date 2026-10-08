@@ -6,6 +6,7 @@ import { useActions } from "@/components/AppActions";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { BillCard } from "@/components/dashboard/BillCard";
 import { HeroCard } from "@/components/dashboard/HeroCard";
+import { HomeBackdrop } from "@/components/dashboard/HomeBackdrop";
 import { ChoreCard } from "@/components/chores/ChoreCard";
 import { ExpenseCard } from "@/components/expenses/ExpenseCard";
 import { RoommateCard } from "@/components/room/RoommateCard";
@@ -42,6 +43,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-7 px-4 pb-6 pt-[max(1rem,env(safe-area-inset-top))]">
+      <HomeBackdrop />
       <header className="flex items-center gap-3">
         <Link href="/profile" aria-label="Open profile"><Avatar user={user} size="md" /></Link>
         <div className="min-w-0 flex-1">

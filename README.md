@@ -17,6 +17,8 @@ announcements and notifications — with a separate login for every roommate.
 - **Chores** – assign, status flow (upcoming → in progress → completed / overdue), recurring **rotation** between roommates
 - **House** – roommates (roles, balances, chores), shopping list (tick / swipe-to-delete), announcements (react + acknowledge)
 - **Notifications**, **analytics** (category donut, monthly trend, contributions, outstanding balances), **transactions** history
+- **Events** (Profile → Events) – plan house events with RSVP (going / maybe / can't) and notifications
+- **Gallery** (Profile → Gallery) – shared photos; photos switched on as "Home background" fade slowly in random order behind the Home tab. **Triple-tap the Gallery tab** to unlock/lock a private *Hidden* folder (only the uploader sees it; hidden photos never appear in the background)
 - **Profile & settings** – edit profile + photo, change password, dark mode, notifications, reset demo data
 - **Responsive** – bottom-nav mobile app; sidebar + right activity rail on desktop; light & dark themes; reduced-motion support
 - **PWA foundation** – manifest, icon, theme colour, mobile metadata

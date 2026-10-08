@@ -1,5 +1,5 @@
 import { DB_VERSION, STORAGE_KEY } from "@/lib/constants";
-import { buildSeed } from "@/lib/mock/seed";
+import { buildSeed, buildSeedMedia } from "@/lib/mock/seed";
 import type { Db } from "@/types";
 
 /**
@@ -19,7 +19,15 @@ export class LocalRepository implements Repository {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Db;
-        if (parsed.version === DB_VERSION) return parsed;
+        if (parsed.version === DB_VERSION) {
+          // Additive migration for data saved before events/gallery existed.
+          if (!parsed.events || !parsed.galleryPhotos) {
+            const media = buildSeedMedia();
+            parsed.events ??= parsed.households.some((h) => h.id === media.events[0].householdId) ? media.events : [];
+            parsed.galleryPhotos ??= parsed.households.some((h) => h.id === media.galleryPhotos[0].householdId) ? media.galleryPhotos : [];
+          }
+          return parsed;
+        }
       }
     } catch {
       /* corrupted storage falls through to a fresh seed */

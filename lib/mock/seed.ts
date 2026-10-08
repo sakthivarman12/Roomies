@@ -1,7 +1,7 @@
 import { AVATAR_COLORS, DB_VERSION, DEMO_PASSWORD } from "@/lib/constants";
 import { mockHash } from "@/lib/utils";
 import type {
-  Announcement, AppNotification, Bill, Chore, Db, Expense, ExpenseCategory, ExpenseSplit,
+  EventItem, GalleryPhoto, Announcement, AppNotification, Bill, Chore, Db, Expense, ExpenseCategory, ExpenseSplit,
   HouseholdMember, Payment, Receipt, ShoppingItem, User,
 } from "@/types";
 
@@ -54,6 +54,31 @@ function expense(
   return {
     id: id("e0000000"), householdId: HID, title, amount, category, date: daysAgo(ago), paidBy,
     splits: equal(amount, ids), splitMode: "equal", notes, createdBy: paidBy, createdAt: daysAgo(ago),
+  };
+}
+
+function scene(from: string, to: string, accent: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs><rect width="800" height="1000" fill="url(#g)"/><circle cx="620" cy="260" r="120" fill="${accent}" opacity=".55"/><path d="M0 760 L220 520 L400 700 L560 560 L800 780 V1000 H0Z" fill="#000" opacity=".22"/><path d="M0 860 L260 660 L480 820 L800 640 V1000 H0Z" fill="#000" opacity=".28"/></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+export function buildSeedMedia(): { events: EventItem[]; galleryPhotos: GalleryPhoto[] } {
+  const eid = (n: number) => `e1000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  const photo = (n: number, src: string, caption: string, addedBy: string): GalleryPhoto => ({
+    id: `91000000-0000-4000-8000-${String(n).padStart(12, "0")}`, householdId: HID, src, caption, addedBy,
+    hidden: false, useAsBackground: true, createdAt: daysAgo(n * 3),
+  });
+  return {
+    events: [
+      { id: eid(1), householdId: HID, title: "House dinner night", description: "Everyone cooks one dish. Devi is on dessert!", location: "Living room", startsAt: daysAhead(3), createdBy: U.devi, rsvps: { [U.devi]: "going", [U.arun]: "going", [U.rahul]: "maybe" }, createdAt: daysAgo(2) },
+      { id: eid(2), householdId: HID, title: "Landlord visit", description: "Annual inspection — keep common areas tidy.", location: "Green Villa", startsAt: daysAhead(9), createdBy: U.sakthi, rsvps: { [U.sakthi]: "going" }, createdAt: daysAgo(1) },
+      { id: eid(3), householdId: HID, title: "Housewarming", description: "Small get-together with friends.", location: "Rooftop", startsAt: daysAgo(12), createdBy: U.arun, rsvps: { [U.sakthi]: "going", [U.devi]: "going", [U.arun]: "going", [U.rahul]: "no" }, createdAt: daysAgo(20) },
+    ],
+    galleryPhotos: [
+      photo(1, scene("#312e81", "#6d5ef0", "#fbbf24"), "Sunset from the balcony", U.sakthi),
+      photo(2, scene("#064e3b", "#10b981", "#fde68a"), "Garden morning", U.devi),
+      photo(3, scene("#7c2d12", "#f97316", "#fff7ed"), "Rooftop evening", U.arun),
+    ],
   };
 }
 
@@ -205,6 +230,7 @@ export function buildSeed(): Db {
       { id: id("d0000000"), householdId: HID, name: "Rental Agreement.pdf", note: "Signed 11-month lease", createdAt: daysAgo(90) },
       { id: id("d0000000"), householdId: HID, name: "Wi-Fi Router Manual", note: "Admin password is on the router sticker", createdAt: daysAgo(60) },
     ],
+    ...buildSeedMedia(),
     receipts,
     session: { userId: null, householdId: null },
     prefs: {},

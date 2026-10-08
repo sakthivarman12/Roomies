@@ -6,7 +6,7 @@ import type { Preferences } from "@/types";
 import { mutateUser, ServiceError } from "./context";
 import type { AuthService } from "./types";
 
-const DEFAULT_PREFS: Preferences = { darkMode: false, currency: "INR", language: "English", notifications: true };
+const DEFAULT_PREFS: Preferences = { hiddenUnlocked: false, darkMode: false, currency: "INR", language: "English", notifications: true };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const localAuthService: AuthService = {

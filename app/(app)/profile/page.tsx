@@ -3,7 +3,7 @@
 import { Bell, ChevronRight, Globe, IndianRupee, KeyRound, LogOut, Moon, RotateCcw, ShieldCheck, UserRound, DoorOpen, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useActions } from "@/components/AppActions";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -11,6 +11,10 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/BottomSheet";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { EventsPanel } from "@/components/profile/EventsPanel";
+import { GalleryPanel } from "@/components/profile/GalleryPanel";
+import { Tabs } from "@/components/ui/Tabs";
+import { useToast } from "@/components/ui/Toast";
 import { Toggle } from "@/components/ui/Toggle";
 import { useAction } from "@/hooks/useAction";
 import { useApp } from "@/hooks/useApp";
@@ -27,6 +31,8 @@ function Row({ icon, title, hint, children, onClick }: { icon: React.ReactNode; 
   return onClick ? <button onClick={onClick} className="flex min-h-[64px] w-full items-center gap-3.5 px-4 py-2.5">{inner}</button> : <div className="flex min-h-[64px] items-center gap-3.5 px-4 py-2.5">{inner}</div>;
 }
 
+type ProfileTab = "settings" | "events" | "gallery";
+
 export default function ProfilePage() {
   const app = useApp();
   const actions = useActions();
@@ -34,12 +40,37 @@ export default function ProfilePage() {
   const run = useAction();
   const [confirm, setConfirm] = useState<"logout" | "leave" | "reset" | null>(null);
   const [soon, setSoon] = useState<string | null>(null);
+  const [tab, setTab] = useState<ProfileTab>("settings");
+  const toast = useToast();
+  const taps = useRef<number[]>([]);
   if (!app) return null;
+
+  /** Triple-tapping the Gallery tab toggles the private hidden folder. */
+  const onTab = (next: ProfileTab) => {
+    setTab(next);
+    if (next !== "gallery") { taps.current = []; return; }
+    const now = Date.now();
+    taps.current = [...taps.current.filter((t) => now - t < 800), now];
+    if (taps.current.length >= 3) {
+      taps.current = [];
+      const unlock = !app.prefs.hiddenUnlocked;
+      authService.updatePrefs({ hiddenUnlocked: unlock });
+      toast.show(unlock ? "Hidden folder unlocked" : "Hidden folder locked", "info");
+    }
+  };
   const { user, prefs, household } = app;
 
   return (
     <div>
       <PageHeader title="Profile" />
+      <div className="px-4 pb-1 pt-1">
+        <Tabs<ProfileTab> label="Profile sections" value={tab} onChange={onTab} options={[
+          { value: "settings", label: "Settings" }, { value: "events", label: "Events" }, { value: "gallery", label: "Gallery" },
+        ]} />
+      </div>
+      {tab === "events" && <div className="px-4 pb-6 pt-3"><EventsPanel /></div>}
+      {tab === "gallery" && <div className="px-4 pb-6 pt-3"><GalleryPanel /></div>}
+      {tab === "settings" && (
       <div className="space-y-5 px-4 pt-2 pb-6">
         <Card className="flex items-center gap-4">
           <Avatar user={user} size="xl" />
@@ -83,6 +114,7 @@ export default function ProfilePage() {
         <p className="text-center text-xs text-muted">Roomies · Live together. Split smarter. · v0.1 local</p>
         <Link href="/analytics" className="block text-center text-sm font-bold text-primary">Household analytics →</Link>
       </div>
+      )}
 
       <Modal open={confirm !== null} onClose={() => setConfirm(null)}
         title={confirm === "logout" ? "Log out?" : confirm === "leave" ? `Leave ${household.name}?` : "Reset demo data?"}

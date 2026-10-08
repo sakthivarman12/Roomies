@@ -184,7 +184,35 @@ export interface Transaction {
   refId: ID;
 }
 
+export type RsvpStatus = "going" | "maybe" | "no";
+
+export interface EventItem {
+  id: ID;
+  householdId: ID;
+  title: string;
+  description?: string;
+  location?: string;
+  startsAt: ISODate;
+  createdBy: ID;
+  rsvps: Record<ID, RsvpStatus>;
+  createdAt: ISODate;
+}
+
+export interface GalleryPhoto {
+  id: ID;
+  householdId: ID;
+  src: string; // data URL in the prototype; Supabase Storage URL later
+  caption?: string;
+  addedBy: ID;
+  /** Hidden-folder photos are only visible to (and usable by) the person who added them. */
+  hidden: boolean;
+  /** Included in the rotating Home background. */
+  useAsBackground: boolean;
+  createdAt: ISODate;
+}
+
 export interface Preferences {
+  hiddenUnlocked?: boolean;
   darkMode: boolean;
   currency: string;
   language: string;
@@ -205,6 +233,8 @@ export interface Db {
   notifications: AppNotification[];
   invites: Invite[];
   documents: HouseDocument[];
+  events: EventItem[];
+  galleryPhotos: GalleryPhoto[];
   receipts: Record<ID, Receipt>;
   session: { userId: ID | null; householdId: ID | null };
   prefs: Record<ID, Preferences>;

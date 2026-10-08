@@ -1,5 +1,5 @@
 import type {
-  Announcement, Bill, Chore, Db, Expense, ExpenseCategory, ExpenseSplit, Frequency, Household,
+  Announcement, Bill, EventItem, GalleryPhoto, RsvpStatus, Chore, Db, Expense, ExpenseCategory, ExpenseSplit, Frequency, Household,
   HouseholdMember, PaymentMethod, Preferences, Priority, Receipt, Role, ShoppingItem, SplitMode, User,
 } from "@/types";
 
@@ -88,6 +88,22 @@ export interface HouseService {
   removeDocument(id: string): void;
   addRule(rule: string): void;
   removeRule(index: number): void;
+}
+
+export interface EventInput { title: string; description?: string; location?: string; startsAt: string }
+
+export interface EventService {
+  create(input: EventInput): EventItem;
+  remove(id: string): void;
+  rsvp(id: string, status: RsvpStatus): void;
+}
+
+export interface GalleryService {
+  add(photos: { src: string; caption?: string }[], hidden: boolean): GalleryPhoto[];
+  setBackground(id: string, on: boolean): void;
+  setHidden(id: string, hidden: boolean): void;
+  setCaption(id: string, caption: string): void;
+  remove(id: string): void;
 }
 
 export interface NotificationService {
