@@ -8,9 +8,10 @@ import { localChoreService } from "./choreService";
 import { localExpenseService } from "./expenseService";
 import { localDevService, localHouseService, localNotificationService } from "./houseService";
 import { localEventService, localGalleryService } from "./mediaService";
+import { localGeoService } from "./geoService";
 import { localRoomService } from "./roomService";
 import type {
-  AuthService, BillService, ChoreService, DevService, EventService, ExpenseService, GalleryService, HouseService,
+  AuthService, BillService, ChoreService, DevService, EventService, ExpenseService, GalleryService, GeoService, HouseService,
   NotificationService, PaymentService, RoomService,
 } from "./types";
 
@@ -24,6 +25,7 @@ export const houseService: HouseService = localHouseService;
 export const notificationService: NotificationService = localNotificationService;
 export const eventService: EventService = localEventService;
 export const galleryService: GalleryService = localGalleryService;
+export const geoService: GeoService = localGeoService;
 export const devService: DevService = localDevService;
 
 export { ServiceError } from "./context";

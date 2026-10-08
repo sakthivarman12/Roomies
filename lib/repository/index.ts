@@ -1,5 +1,5 @@
 import { DB_VERSION, STORAGE_KEY } from "@/lib/constants";
-import { buildSeed, buildSeedMedia } from "@/lib/mock/seed";
+import { buildSeed, buildSeedGeo, buildSeedMedia } from "@/lib/mock/seed";
 import type { Db } from "@/types";
 
 /**
@@ -25,6 +25,13 @@ export class LocalRepository implements Repository {
             const media = buildSeedMedia();
             parsed.events ??= parsed.households.some((h) => h.id === media.events[0].householdId) ? media.events : [];
             parsed.galleryPhotos ??= parsed.households.some((h) => h.id === media.galleryPhotos[0].householdId) ? media.galleryPhotos : [];
+          }
+          if (!parsed.locations || !parsed.stories) {
+            const geo = buildSeedGeo();
+            const seeded = parsed.households.some((h) => h.id === geo.locations[0].householdId);
+            parsed.locations ??= seeded ? geo.locations : [];
+            parsed.stories ??= [];
+            parsed.households.forEach((h) => { if (h.lat === undefined && seeded && h.id === geo.locations[0].householdId) { h.lat = 12.9352; h.lng = 77.6245; } });
           }
           return parsed;
         }

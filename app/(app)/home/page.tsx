@@ -3,6 +3,8 @@
 import { Bell, ChevronDown, ClipboardPlus, HandCoins, Plus, ShoppingBasket } from "lucide-react";
 import Link from "next/link";
 import { useActions } from "@/components/AppActions";
+import { AddMenu } from "@/components/AddMenu";
+import { StoriesStrip } from "@/components/map/StoriesStrip";
 import { BalanceCard } from "@/components/dashboard/BalanceCard";
 import { BillCard } from "@/components/dashboard/BillCard";
 import { HeroCard } from "@/components/dashboard/HeroCard";
@@ -50,6 +52,7 @@ export default function HomePage() {
             {household.name} <ChevronDown className="h-3.5 w-3.5" />
           </button>
         </div>
+        <AddMenu />
         <Link href="/notifications" aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`} className="relative">
           <IconButton label="Notifications" tone="filled" tabIndex={-1}><Bell className="h-5 w-5" /></IconButton>
           {unread > 0 && <span key={unread} className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 animate-[pop_0.4s_ease-out] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-black text-white">{unread}</span>}
@@ -57,6 +60,7 @@ export default function HomePage() {
       </header>
       <p className="-mt-4 px-1 text-sm text-muted">{tagline}</p>
 
+      <StoriesStrip />
       <HeroCard />
       <Reveal delay={0.08}><BalanceCard /></Reveal>
 

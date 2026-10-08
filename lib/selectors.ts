@@ -1,7 +1,7 @@
 import { BREAKDOWN_GROUPS } from "@/lib/constants";
 import { isSameMonth } from "@/lib/format";
 import { round2, sum } from "@/lib/utils";
-import type { Db, Expense, Household, HouseholdMember, Transaction, User } from "@/types";
+import type { Db, Expense, Household, HouseholdMember, Story, Transaction, User } from "@/types";
 
 export interface MemberView {
   user: User;
@@ -134,4 +134,12 @@ export function nextInRotation(rotation: string[], current: string): string {
   if (!rotation.length) return current;
   const i = rotation.indexOf(current);
   return rotation[(i + 1) % rotation.length] ?? current;
+}
+
+/** Stories posted in the last 24 hours, oldest first. */
+export function activeStories(db: Db, householdId: string): Story[] {
+  const now = Date.now();
+  return db.stories
+    .filter((s) => s.householdId === householdId && +new Date(s.expiresAt) > now)
+    .sort((a, b) => +new Date(a.createdAt) - +new Date(b.createdAt));
 }

@@ -1,7 +1,7 @@
 import { AVATAR_COLORS, DB_VERSION, DEMO_PASSWORD } from "@/lib/constants";
 import { mockHash } from "@/lib/utils";
 import type {
-  EventItem, GalleryPhoto, Announcement, AppNotification, Bill, Chore, Db, Expense, ExpenseCategory, ExpenseSplit,
+  MemberLocation, EventItem, GalleryPhoto, Announcement, AppNotification, Bill, Chore, Db, Expense, ExpenseCategory, ExpenseSplit,
   HouseholdMember, Payment, Receipt, ShoppingItem, User,
 } from "@/types";
 
@@ -79,6 +79,16 @@ export function buildSeedMedia(): { events: EventItem[]; galleryPhotos: GalleryP
       photo(2, scene("#064e3b", "#10b981", "#fde68a"), "Garden morning", U.devi),
       photo(3, scene("#7c2d12", "#f97316", "#fff7ed"), "Rooftop evening", U.arun),
     ],
+  };
+}
+
+export function buildSeedGeo(): { locations: MemberLocation[]; stories: [] } {
+  const at = (userId: string, lat: number, lng: number, minsAgo: number): MemberLocation => ({
+    userId, householdId: HID, lat, lng, accuracy: 25, sharing: true, updatedAt: new Date(Date.now() - minsAgo * 60000).toISOString(),
+  });
+  return {
+    locations: [at(U.devi, 12.9279, 77.6271, 4), at(U.arun, 12.9716, 77.5946, 18), at(U.rahul, 12.9352, 77.6245, 1)],
+    stories: [],
   };
 }
 
@@ -221,7 +231,7 @@ export function buildSeed(): Db {
     version: DB_VERSION, users,
     households: [{
       id: HID, name: "Green Villa", address: "12, Lake View Road, Koramangala, Bengaluru", monthlyRent: 24000,
-      rentDueDay: 5, rooms: 4, inviteCode: "RM-7X92KP", createdAt: daysAgo(90),
+      rentDueDay: 5, rooms: 4, lat: 12.9352, lng: 77.6245, inviteCode: "RM-7X92KP", createdAt: daysAgo(90),
       rules: ["Clean the kitchen after cooking", "Quiet hours 11 PM – 6 AM", "Guests: inform roommates in advance", "Rent by the 5th"],
     }],
     members, expenses, payments, bills, chores, shopping, announcements, notifications,
@@ -231,6 +241,7 @@ export function buildSeed(): Db {
       { id: id("d0000000"), householdId: HID, name: "Wi-Fi Router Manual", note: "Admin password is on the router sticker", createdAt: daysAgo(60) },
     ],
     ...buildSeedMedia(),
+    ...buildSeedGeo(),
     receipts,
     session: { userId: null, householdId: null },
     prefs: {},

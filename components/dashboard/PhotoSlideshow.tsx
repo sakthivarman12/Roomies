@@ -16,7 +16,7 @@ export function PhotoSlideshow({ className, opacity = 0.4 }: { className?: strin
   const app = useApp();
   const reduce = useReducedMotion();
   const photos = app
-    ? app.db.galleryPhotos.filter((p) => p.householdId === app.household.id && p.useAsBackground && !p.hidden)
+    ? app.db.galleryPhotos.filter((p) => p.householdId === app.household.id && p.useAsBackground && !p.hidden && p.kind !== "video" && Boolean(p.src))
     : [];
   const key = photos.map((p) => p.id).join("|");
   const count = photos.length;

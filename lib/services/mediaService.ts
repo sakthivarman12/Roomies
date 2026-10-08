@@ -1,5 +1,6 @@
 import { canManageHousehold } from "@/lib/permissions";
 import { assert } from "@/lib/permissions";
+import { mediaStore } from "@/lib/mediaStore";
 import { nowIso, uid } from "@/lib/utils";
 import { mutate, notify, otherMemberIds, ServiceError } from "./context";
 import type { EventService, GalleryService } from "./types";
@@ -44,8 +45,9 @@ export const localGalleryService: GalleryService = {
     return mutate(({ db, user, household }) => {
       if (!photos.length) throw new ServiceError("Choose at least one photo.");
       const created = photos.map((p) => ({
-        id: uid(), householdId: household.id, src: p.src, caption: p.caption?.trim() || undefined, addedBy: user.id,
-        hidden, useAsBackground: !hidden, createdAt: nowIso(),
+        id: uid(), householdId: household.id, src: p.src, kind: p.kind ?? ("image" as const), mediaId: p.mediaId,
+        caption: p.caption?.trim() || undefined, addedBy: user.id,
+        hidden, useAsBackground: !hidden && (p.kind ?? "image") === "image", createdAt: nowIso(),
       }));
       db.galleryPhotos.unshift(...created);
       return created;
@@ -87,6 +89,9 @@ export const localGalleryService: GalleryService = {
       if (!p) throw new ServiceError("Photo not found.");
       assert(p.addedBy === user.id || (!p.hidden && canManageHousehold(db, user, household.id)), "You can't delete this photo.");
       db.galleryPhotos = db.galleryPhotos.filter((x) => x.id !== id);
+      if (p.mediaId && !db.galleryPhotos.some((x) => x.mediaId === p.mediaId) && !db.stories.some((s) => s.mediaId === p.mediaId)) {
+        void mediaStore.remove(p.mediaId).catch(() => undefined);
+      }
     });
   },
 };

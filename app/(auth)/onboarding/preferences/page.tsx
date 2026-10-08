@@ -3,6 +3,7 @@
 import { Bell, IndianRupee, Moon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { PermissionsList } from "@/components/profile/NotifySheets";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
@@ -35,6 +36,8 @@ export default function PreferencesStep() {
           <div className="flex-1"><p className="font-bold">Currency</p><p className="text-xs text-muted">Indian Rupee (₹)</p></div>
         </div>
       </Card>
+      <h2 className="mb-3 mt-8 px-1 text-sm font-extrabold">Permissions</h2>
+      <PermissionsList />
       <Button size="lg" block className="mt-8" onClick={() => router.replace("/home")}>Go to my dashboard</Button>
     </AuthShell>
   );

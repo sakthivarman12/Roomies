@@ -60,7 +60,7 @@ function EventCard({ event, past }: { event: EventItem; past: boolean }) {
   );
 }
 
-function EventSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function EventSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const toast = useToast();
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(toInputDate(new Date()));

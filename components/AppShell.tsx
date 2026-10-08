@@ -1,10 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bell, ChartNoAxesColumn, Home, House, Receipt, Sparkles, User } from "lucide-react";
+import { Bell, ChartNoAxesColumn, Building2, Home, Map as MapIcon, Receipt, Sparkles, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppActionsProvider, useActions } from "@/components/AppActions";
+import { LocationSharer } from "@/components/map/LocationSharer";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import { RightPanel } from "@/components/dashboard/RightPanel";
 import { Logo } from "@/components/ui/Logo";
 import { Avatar } from "@/components/ui/Avatar";
@@ -16,18 +18,20 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/home", label: "Home", icon: Home },
-  { href: "/expenses", label: "Expenses", icon: Receipt },
+  { href: "/map", label: "Map", icon: MapIcon },
   { href: "/chores", label: "Chores", icon: Sparkles },
-  { href: "/house", label: "House", icon: House },
+  { href: "/house", label: "House", icon: Building2 },
   { href: "/profile", label: "Profile", icon: User },
 ];
 const EXTRA = [
+  { href: "/expenses", label: "Expenses", icon: Receipt },
   { href: "/analytics", label: "Analytics", icon: ChartNoAxesColumn },
   { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
-function isActive(path: string, href: string) {
-  return path === href || path.startsWith(`${href}/`) || (href === "/house" && path.startsWith("/roommates")) || (href === "/expenses" && (path.startsWith("/transactions") || path.startsWith("/bills")));
+function isActive(path: string, href: string, nested = true) {
+  if (nested && href === "/profile") return path === href || ["/expenses", "/transactions", "/bills", "/analytics"].some((p) => path === p || path.startsWith(`${p}/`));
+  return path === href || path.startsWith(`${href}/`) || (href === "/house" && path.startsWith("/roommates"));
 }
 
 function BottomNav({ path }: { path: string }) {
@@ -74,7 +78,7 @@ function Sidebar({ path }: { path: string }) {
       </button>
       <nav aria-label="Main" className="mt-6 flex-1 space-y-1">
         {[...NAV.slice(0, 4), ...EXTRA, NAV[4]].map((n) => {
-          const active = isActive(path, n.href);
+          const active = isActive(path, n.href, false);
           return (
             <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={cn("relative flex min-h-[48px] items-center gap-3 rounded-2xl px-3.5 text-sm font-bold transition-colors", active ? "bg-primary-soft text-primary" : "text-muted hover:bg-surface2 hover:text-ink")}>
               <n.icon className="h-5 w-5" />
@@ -111,6 +115,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <BottomNav path={path} />
+      <NotificationCenter />
+      <LocationSharer />
     </AppActionsProvider>
   );
 }

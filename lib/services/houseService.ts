@@ -101,6 +101,11 @@ export const localNotificationService: NotificationService = {
       db.notifications.filter((n) => n.userId === user.id).forEach((n) => (n.read = true));
     });
   },
+  sendTest() {
+    mutate(({ db, user, household }) => {
+      notify(db, household.id, [user.id], "announcement", "Test notification", `Hi ${user.name}, this is how Roomies alerts look and sound.`);
+    });
+  },
   clearAll() {
     mutateUser((db, user) => {
       db.notifications = db.notifications.filter((n) => n.userId !== user.id);

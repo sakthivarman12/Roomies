@@ -35,6 +35,8 @@ export interface Household {
   address: string;
   monthlyRent: number;
   rentDueDay: number;
+  lat?: number;
+  lng?: number;
   rooms: number;
   rules: string[];
   inviteCode: string;
@@ -200,10 +202,37 @@ export interface EventItem {
   createdAt: ISODate;
 }
 
+export interface MemberLocation {
+  userId: ID;
+  householdId: ID;
+  lat: number;
+  lng: number;
+  accuracy?: number;
+  sharing: boolean;
+  updatedAt: ISODate;
+}
+
+export interface Story {
+  id: ID;
+  householdId: ID;
+  userId: ID;
+  kind: "image" | "video";
+  src?: string; // image data URL
+  mediaId?: ID; // video blob key in IndexedDB (app storage, never the phone's camera roll)
+  caption?: string;
+  lat?: number;
+  lng?: number;
+  viewedBy: ID[];
+  createdAt: ISODate;
+  expiresAt: ISODate;
+}
+
 export interface GalleryPhoto {
   id: ID;
   householdId: ID;
-  src: string; // data URL in the prototype; Supabase Storage URL later
+  kind?: "image" | "video";
+  mediaId?: ID;
+  src: string; // image data URL in the prototype; empty for videos (see mediaId); Supabase Storage URL later
   caption?: string;
   addedBy: ID;
   /** Hidden-folder photos are only visible to (and usable by) the person who added them. */
@@ -213,7 +242,18 @@ export interface GalleryPhoto {
   createdAt: ISODate;
 }
 
+export type PopupStyle = "balloon" | "blast" | "banner" | "off";
+
+export interface NotifyPrefs {
+  tone: string;
+  volume: number; // 0..1
+  vibrate: boolean;
+  popup: PopupStyle;
+  system: boolean; // also post to the device notification panel
+}
+
 export interface Preferences {
+  notify?: Partial<NotifyPrefs>;
   hiddenUnlocked?: boolean;
   theme?: Partial<ThemePrefs>;
   currency: string;
@@ -237,6 +277,8 @@ export interface Db {
   documents: HouseDocument[];
   events: EventItem[];
   galleryPhotos: GalleryPhoto[];
+  locations: MemberLocation[];
+  stories: Story[];
   receipts: Record<ID, Receipt>;
   session: { userId: ID | null; householdId: ID | null };
   prefs: Record<ID, Preferences>;

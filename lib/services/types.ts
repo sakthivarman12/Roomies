@@ -1,5 +1,5 @@
 import type {
-  Announcement, Bill, EventItem, GalleryPhoto, RsvpStatus, Chore, Db, Expense, ExpenseCategory, ExpenseSplit, Frequency, Household,
+  Announcement, Bill, EventItem, GalleryPhoto, MemberLocation, RsvpStatus, Story, Chore, Db, Expense, ExpenseCategory, ExpenseSplit, Frequency, Household,
   HouseholdMember, PaymentMethod, Preferences, Priority, Receipt, Role, ShoppingItem, SplitMode, User,
 } from "@/types";
 import type { ThemePrefs } from "@/lib/theme";
@@ -101,17 +101,38 @@ export interface EventService {
 }
 
 export interface GalleryService {
-  add(photos: { src: string; caption?: string }[], hidden: boolean): GalleryPhoto[];
+  add(photos: { src: string; caption?: string; kind?: "image" | "video"; mediaId?: string }[], hidden: boolean): GalleryPhoto[];
   setBackground(id: string, on: boolean): void;
   setHidden(id: string, hidden: boolean): void;
   setCaption(id: string, caption: string): void;
   remove(id: string): void;
 }
 
+export interface StoryInput {
+  kind: "image" | "video";
+  src?: string;
+  mediaId?: string;
+  caption?: string;
+  lat?: number;
+  lng?: number;
+  /** Also keep a copy in the household gallery (app storage, never the phone's camera roll). */
+  saveToGallery: boolean;
+}
+
+export interface GeoService {
+  setSharing(on: boolean): void;
+  updateLocation(lat: number, lng: number, accuracy?: number): void;
+  createStory(input: StoryInput): Story;
+  removeStory(id: string): void;
+  markStoryViewed(id: string): void;
+  getLocations(): MemberLocation[];
+}
+
 export interface NotificationService {
   markRead(id: string): void;
   markAllRead(): void;
   clearAll(): void;
+  sendTest(): void;
 }
 
 export interface DevService {

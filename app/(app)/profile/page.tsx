@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChevronRight, Globe, IndianRupee, KeyRound, LogOut, Palette, RotateCcw, ShieldCheck, UserRound, DoorOpen, Users } from "lucide-react";
+import { Bell, ChartNoAxesColumn, ChevronRight, Receipt, Repeat2, ScrollText, ShieldCheck as ShieldIcon, Globe, IndianRupee, KeyRound, LogOut, Palette, RotateCcw, ShieldCheck, UserRound, DoorOpen, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -15,7 +15,6 @@ import { EventsPanel } from "@/components/profile/EventsPanel";
 import { GalleryPanel } from "@/components/profile/GalleryPanel";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
-import { Toggle } from "@/components/ui/Toggle";
 import { useAction } from "@/hooks/useAction";
 import { useApp } from "@/hooks/useApp";
 import { authService, devService, roomService } from "@/lib/services";
@@ -72,6 +71,13 @@ export default function ProfilePage() {
       {tab === "gallery" && <div className="px-4 pb-6 pt-3"><GalleryPanel /></div>}
       {tab === "settings" && (
       <div className="space-y-5 px-4 pt-2 pb-6">
+        <Card padded={false} className="divide-y divide-line">
+          <p className="px-4 pt-3.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Money</p>
+          <Row icon={<Receipt className="h-5 w-5" />} title="Expenses" hint="All shared expenses & splits" onClick={() => router.push("/expenses")} />
+          <Row icon={<Repeat2 className="h-5 w-5" />} title="Bills" hint="Upcoming & recurring" onClick={() => router.push("/bills")} />
+          <Row icon={<ScrollText className="h-5 w-5" />} title="Transactions" hint="History & settlements" onClick={() => router.push("/transactions")} />
+          <Row icon={<ChartNoAxesColumn className="h-5 w-5" />} title="Analytics" hint="Spending trends & balances" onClick={() => router.push("/analytics")} />
+        </Card>
         <Card className="flex items-center gap-4">
           <Avatar user={user} size="xl" />
           <div className="min-w-0 flex-1">
@@ -95,7 +101,8 @@ export default function ProfilePage() {
         <Card padded={false} className="divide-y divide-line">
           <Row icon={<Users className="h-5 w-5" />} title="Households" hint={`${app.households.length} · ${household.name} active`} onClick={actions.switchHousehold} />
           <Row icon={<Palette className="h-5 w-5" />} title="App theme" hint={`${theme.mode[0].toUpperCase() + theme.mode.slice(1)} · ${theme.accent} · ${theme.navStyle} nav`} onClick={actions.editTheme} />
-          <Row icon={<Bell className="h-5 w-5" />} title="Notifications" hint="Bills, payments, chores"><Toggle label="Notifications" checked={prefs.notifications} onChange={(v) => authService.updatePrefs({ notifications: v })} /></Row>
+          <Row icon={<Bell className="h-5 w-5" />} title="Notifications" hint={prefs.notifications ? "Tone, popup & phone alerts" : "Off"} onClick={actions.editNotifications} />
+          <Row icon={<ShieldIcon className="h-5 w-5" />} title="Permissions" hint="Notifications, location, camera" onClick={actions.editPermissions} />
           <Row icon={<IndianRupee className="h-5 w-5" />} title="Currency" hint="Indian Rupee (₹)" />
           <Row icon={<Globe className="h-5 w-5" />} title="Language" hint="English" onClick={() => setSoon("More languages are coming soon.")} />
           <Row icon={<ShieldCheck className="h-5 w-5" />} title="Privacy" hint="Your data stays on this device" onClick={() => setSoon("In this local prototype all data lives only in this browser. Household data is isolated per household.")} />
