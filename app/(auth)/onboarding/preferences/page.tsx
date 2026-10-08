@@ -23,7 +23,7 @@ export default function PreferencesStep() {
         <div className="flex items-center gap-3 p-4">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-soft text-violet"><Moon className="h-5 w-5" /></span>
           <div className="flex-1"><p className="font-bold">Dark mode</p><p className="text-xs text-muted">Easier on the eyes at night</p></div>
-          <Toggle label="Dark mode" checked={prefs.darkMode} onChange={(v) => authService.updatePrefs({ darkMode: v })} />
+          <Toggle label="Dark mode" checked={app.theme.mode === "dark"} onChange={(v) => authService.updateTheme({ mode: v ? "dark" : "light" })} />
         </div>
         <div className="flex items-center gap-3 p-4">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-warning-soft text-warning"><Bell className="h-5 w-5" /></span>

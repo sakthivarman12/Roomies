@@ -1,16 +1,18 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useApp } from "@/hooks/useApp";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { cn } from "@/lib/utils";
 
 const ROTATE_MS = 14000;
 
 /**
- * Slowly crossfading, low-opacity photo backdrop for the Home tab.
- * Uses the household's non-hidden gallery photos that are switched on as Home background.
+ * Slowly crossfading photos from the household gallery (non-hidden photos switched on as Home background).
+ * Fills its positioned parent; keep it low-opacity so overlaid text stays readable.
  */
-export function HomeBackdrop() {
+export function PhotoSlideshow({ className, opacity = 0.4 }: { className?: string; opacity?: number }) {
   const app = useApp();
   const reduce = useReducedMotion();
   const photos = app
@@ -27,7 +29,7 @@ export function HomeBackdrop() {
       if (next === prev) next = (next + 1) % count;
       return next;
     });
-    const first = setTimeout(pick, 60); // start on a random photo
+    const first = setTimeout(pick, 60); // begin on a random photo
     const timer = setInterval(pick, ROTATE_MS);
     return () => { clearTimeout(first); clearInterval(timer); };
   }, [count, key]);
@@ -36,19 +38,18 @@ export function HomeBackdrop() {
   const photo = photos[index % count];
 
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div aria-hidden className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
       <AnimatePresence initial={false}>
         <motion.div
           key={photo.id}
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url("${photo.src}")` }}
           initial={{ opacity: 0, scale: 1.04 }}
-          animate={{ opacity: 0.22, scale: reduce ? 1.04 : 1.14 }}
+          animate={{ opacity, scale: reduce ? 1.04 : 1.14 }}
           exit={{ opacity: 0 }}
           transition={{ opacity: { duration: 4, ease: "easeInOut" }, scale: { duration: ROTATE_MS / 1000 + 6, ease: "linear" } }}
         />
       </AnimatePresence>
-      <div className="absolute inset-0 bg-gradient-to-b from-bg/30 via-bg/50 to-bg/90" />
     </div>
   );
 }

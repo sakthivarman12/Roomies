@@ -64,7 +64,7 @@ export function GalleryPanel() {
         <input type="file" accept="image/*" multiple className="sr-only" disabled={busy} onChange={(e) => { void upload(e.target.files); e.target.value = ""; }} />
       </label>
 
-      {!inHidden && <p className="px-1 text-xs text-muted">{bgCount > 0 ? `${bgCount} photo${bgCount > 1 ? "s" : ""} slowly rotate behind your Home screen.` : "Open a photo and switch on “Home background” to see it behind Home."}</p>}
+      {!inHidden && <p className="px-1 text-xs text-muted">{bgCount > 0 ? `${bgCount} photo${bgCount > 1 ? "s" : ""} slowly rotate inside the Home summary card.` : "Open a photo and switch on “Home background” to show it in the Home summary card."}</p>}
 
       {list.length === 0 ? (
         <EmptyState icon={inHidden ? <EyeOff className="h-7 w-7" /> : <Images className="h-7 w-7" />} title={inHidden ? "Hidden folder is empty" : "No photos yet"} description={inHidden ? "Photos you hide are only visible to you." : "Share moments from the house."} />
@@ -90,7 +90,7 @@ export function GalleryPanel() {
             {!current.hidden && (
               <div className="flex items-center gap-3 rounded-2xl bg-surface2 p-3.5">
                 <MonitorPlay className="h-5 w-5 text-primary" />
-                <div className="flex-1"><p className="text-sm font-bold">Home background</p><p className="text-xs text-muted">Fades in slowly behind Home</p></div>
+                <div className="flex-1"><p className="text-sm font-bold">Home background</p><p className="text-xs text-muted">Fades slowly inside the Home card</p></div>
                 <Toggle label="Use as Home background" checked={current.useAsBackground} onChange={(v) => run(() => galleryService.setBackground(current.id, v))} />
               </div>
             )}

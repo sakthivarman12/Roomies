@@ -1,6 +1,7 @@
 "use client";
 
-import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "framer-motion";
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useEffect } from "react";
 import { money } from "@/lib/format";
 import { cn } from "@/lib/utils";

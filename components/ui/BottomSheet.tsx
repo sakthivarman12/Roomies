@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { X } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -60,7 +61,7 @@ export function BottomSheet({ open, onClose, title, description, children, foote
             aria-modal="true"
             aria-labelledby={titleId}
             className={cn(
-              "relative flex max-h-[92dvh] w-full flex-col bg-surface shadow-[var(--shadow-lg)]",
+              "relative flex max-h-[92dvh] w-full flex-col border border-line bg-strong shadow-[var(--shadow-lg)]",
               variant === "modal" ? "max-w-md rounded-[28px]" : "max-w-xl rounded-t-[32px] md:rounded-[32px]",
             )}
             initial={reduce ? { opacity: 0 } : { y: "100%", opacity: 0.6 }}
@@ -85,7 +86,7 @@ export function BottomSheet({ open, onClose, title, description, children, foote
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4 md:px-6">{children}</div>
             {footer && (
-              <div className="border-t border-line bg-surface px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 md:rounded-b-[32px] md:px-6">{footer}</div>
+              <div className="border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 md:rounded-b-[32px] md:px-6">{footer}</div>
             )}
           </motion.div>
         </div>

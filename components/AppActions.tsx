@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { ThemeSheet } from "@/components/profile/ThemeSheet";
 import { ChoreSheet } from "@/components/chores/ChoreSheet";
 import { ExpenseSheet } from "@/components/expenses/ExpenseSheet";
 import { SettleSheet } from "@/components/expenses/SettleSheet";
@@ -22,6 +23,7 @@ interface Actions {
   changePassword: () => void;
   editHousehold: () => void;
   switchHousehold: () => void;
+  editTheme: () => void;
 }
 
 type SheetState =
@@ -31,12 +33,12 @@ type SheetState =
   | { kind: "chore"; chore: Chore | null }
   | { kind: "bill" }
   | { kind: "payBill"; bill: Bill }
-  | { kind: "announcement" | "member" | "profile" | "password" | "household" | "switch" };
+  | { kind: "announcement" | "member" | "profile" | "password" | "household" | "switch" | "theme" };
 
 const noop = () => undefined;
 const ActionsContext = createContext<Actions>({
   addExpense: noop, settle: noop, addChore: noop, addBill: noop, payBill: noop, addAnnouncement: noop, addMember: noop,
-  editProfile: noop, changePassword: noop, editHousehold: noop, switchHousehold: noop,
+  editProfile: noop, changePassword: noop, editHousehold: noop, switchHousehold: noop, editTheme: noop,
 });
 
 export const useActions = () => useContext(ActionsContext);
@@ -59,6 +61,7 @@ export function AppActionsProvider({ children }: { children: React.ReactNode }) 
     changePassword: () => setSheet({ kind: "password" }),
     editHousehold: () => setSheet({ kind: "household" }),
     switchHousehold: () => setSheet({ kind: "switch" }),
+    editTheme: () => setSheet({ kind: "theme" }),
   }), []);
 
   return (
@@ -74,6 +77,7 @@ export function AppActionsProvider({ children }: { children: React.ReactNode }) 
       <ProfileSheet open={sheet.kind === "profile"} onClose={close} />
       <PasswordSheet open={sheet.kind === "password"} onClose={close} />
       <HouseholdSheet open={sheet.kind === "household"} onClose={close} />
+      <ThemeSheet open={sheet.kind === "theme"} onClose={close} />
       <SwitchHouseholdSheet open={sheet.kind === "switch"} onClose={close} />
     </ActionsContext.Provider>
   );

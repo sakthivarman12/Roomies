@@ -6,7 +6,7 @@ import type { Preferences } from "@/types";
 import { mutateUser, ServiceError } from "./context";
 import type { AuthService } from "./types";
 
-const DEFAULT_PREFS: Preferences = { hiddenUnlocked: false, darkMode: false, currency: "INR", language: "English", notifications: true };
+const DEFAULT_PREFS: Preferences = { hiddenUnlocked: false, currency: "INR", language: "English", notifications: true };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const localAuthService: AuthService = {
@@ -86,6 +86,13 @@ export const localAuthService: AuthService = {
       if (target.passwordHash !== mockHash(current)) throw new ServiceError("Current password is incorrect.");
       if (next.length < 6) throw new ServiceError("New password must be at least 6 characters.");
       target.passwordHash = mockHash(next);
+    });
+  },
+
+  updateTheme(patch) {
+    mutateUser((db, user) => {
+      const prev = db.prefs[user.id] ?? DEFAULT_PREFS;
+      db.prefs[user.id] = { ...DEFAULT_PREFS, ...prev, theme: { ...prev.theme, ...patch } };
     });
   },
 

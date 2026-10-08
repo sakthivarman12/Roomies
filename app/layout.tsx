@@ -15,19 +15,18 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#4338ca" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c0d1a" },
+    { color: "#090a16" },
   ],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
-const themeScript = `try{var t=localStorage.getItem('roomies.theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}`;
+const themeScript = `try{var t=JSON.parse(localStorage.getItem('roomies.theme2')||'{}');var m=t.mode||'dark';if(m==='system')m=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';var d=document.documentElement;d.setAttribute('data-theme',m);d.setAttribute('data-accent',t.accent||'indigo');d.setAttribute('data-glass',t.glass||'medium');d.setAttribute('data-motion',t.motion||'full');d.setAttribute('data-icons',t.iconStyle||'regular')}catch(e){document.documentElement.setAttribute('data-theme','dark')}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={jakarta.variable} suppressHydrationWarning>
+    <html lang="en" data-theme="dark" className={jakarta.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

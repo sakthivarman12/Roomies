@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChevronRight, Globe, IndianRupee, KeyRound, LogOut, Moon, RotateCcw, ShieldCheck, UserRound, DoorOpen, Users } from "lucide-react";
+import { Bell, ChevronRight, Globe, IndianRupee, KeyRound, LogOut, Palette, RotateCcw, ShieldCheck, UserRound, DoorOpen, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -58,7 +58,7 @@ export default function ProfilePage() {
       toast.show(unlock ? "Hidden folder unlocked" : "Hidden folder locked", "info");
     }
   };
-  const { user, prefs, household } = app;
+  const { user, prefs, household, theme } = app;
 
   return (
     <div>
@@ -94,7 +94,7 @@ export default function ProfilePage() {
 
         <Card padded={false} className="divide-y divide-line">
           <Row icon={<Users className="h-5 w-5" />} title="Households" hint={`${app.households.length} · ${household.name} active`} onClick={actions.switchHousehold} />
-          <Row icon={<Moon className="h-5 w-5" />} title="Dark mode"><Toggle label="Dark mode" checked={prefs.darkMode} onChange={(v) => authService.updatePrefs({ darkMode: v })} /></Row>
+          <Row icon={<Palette className="h-5 w-5" />} title="App theme" hint={`${theme.mode[0].toUpperCase() + theme.mode.slice(1)} · ${theme.accent} · ${theme.navStyle} nav`} onClick={actions.editTheme} />
           <Row icon={<Bell className="h-5 w-5" />} title="Notifications" hint="Bills, payments, chores"><Toggle label="Notifications" checked={prefs.notifications} onChange={(v) => authService.updatePrefs({ notifications: v })} /></Row>
           <Row icon={<IndianRupee className="h-5 w-5" />} title="Currency" hint="Indian Rupee (₹)" />
           <Row icon={<Globe className="h-5 w-5" />} title="Language" hint="English" onClick={() => setSoon("More languages are coming soon.")} />

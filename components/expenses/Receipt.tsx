@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { dateTime, money } from "@/lib/format";
 import { AnimatedNumber } from "@/components/ui/Progress";
 import { cn } from "@/lib/utils";

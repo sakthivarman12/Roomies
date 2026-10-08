@@ -1,6 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Check, Download, Eye, Printer, Share2 } from "lucide-react";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";

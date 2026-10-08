@@ -11,6 +11,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { ScreenSkeleton } from "@/components/ui/States";
 import { useApp } from "@/hooks/useApp";
 import { useGuard } from "@/hooks/useGuard";
+import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -30,17 +31,27 @@ function isActive(path: string, href: string) {
 }
 
 function BottomNav({ path }: { path: string }) {
+  const { navStyle } = useTheme();
+  const docked = navStyle === "docked";
+  const iconsOnly = navStyle === "icons";
   return (
-    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
-      <ul className="flex w-full max-w-md items-center justify-between rounded-[28px] border border-line bg-surface/90 p-1.5 shadow-[var(--shadow-lg)] backdrop-blur-xl">
+    <nav aria-label="Main" className={cn("fixed inset-x-0 bottom-0 z-40 flex justify-center lg:hidden", docked ? "" : "px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]")}>
+      <ul className={cn(
+        "flex w-full items-center justify-between border-line bg-surface shadow-[var(--shadow-lg)]",
+        docked && "rounded-none border-t px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1",
+        navStyle === "floating" && "max-w-md rounded-[28px] border p-1.5",
+        iconsOnly && "max-w-[300px] rounded-full border p-1.5",
+      )}>
         {NAV.map((n) => {
           const active = isActive(path, n.href);
           return (
             <li key={n.href} className="flex-1">
-              <Link href={n.href} aria-current={active ? "page" : undefined} className="relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 rounded-[22px]">
-                {active && <motion.span layoutId="bottom-nav-pill" className="absolute inset-0 rounded-[22px] bg-primary" transition={{ type: "spring", stiffness: 500, damping: 36 }} />}
-                <n.icon className={cn("relative h-[22px] w-[22px]", active ? "text-primary-ink" : "text-muted")} strokeWidth={active ? 2.4 : 1.9} />
-                <span className={cn("relative text-[10.5px] font-bold", active ? "text-primary-ink" : "text-muted")}>{n.label}</span>
+              <Link href={n.href} aria-label={iconsOnly ? n.label : undefined} aria-current={active ? "page" : undefined}
+                className={cn("relative flex flex-col items-center justify-center gap-0.5", iconsOnly ? "min-h-[48px] rounded-full" : docked ? "min-h-[52px]" : "min-h-[56px] rounded-[22px]")}>
+                {active && !docked && <motion.span layoutId="bottom-nav-pill" className={cn("absolute inset-0 bg-primary", iconsOnly ? "rounded-full" : "rounded-[22px]")} transition={{ type: "spring", stiffness: 500, damping: 36 }} />}
+                {active && docked && <motion.span layoutId="bottom-nav-bar" className="absolute inset-x-5 -top-1 h-[3px] rounded-full bg-primary" transition={{ type: "spring", stiffness: 500, damping: 36 }} />}
+                <n.icon className={cn("relative h-[22px] w-[22px]", active ? (docked ? "text-primary" : "text-primary-ink") : "text-muted")} />
+                {!iconsOnly && <span className={cn("relative text-[10.5px] font-bold", active ? (docked ? "text-primary" : "text-primary-ink") : "text-muted")}>{n.label}</span>}
               </Link>
             </li>
           );

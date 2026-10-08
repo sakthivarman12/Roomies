@@ -2,6 +2,7 @@ import type {
   Announcement, Bill, EventItem, GalleryPhoto, RsvpStatus, Chore, Db, Expense, ExpenseCategory, ExpenseSplit, Frequency, Household,
   HouseholdMember, PaymentMethod, Preferences, Priority, Receipt, Role, ShoppingItem, SplitMode, User,
 } from "@/types";
+import type { ThemePrefs } from "@/lib/theme";
 
 /** Service contracts. Local implementations live beside these; Supabase ones can replace them. */
 
@@ -17,6 +18,7 @@ export interface AuthService {
   updateProfile(patch: Partial<Pick<User, "name" | "phone" | "email" | "photo" | "avatarColor">>): User;
   changePassword(current: string, next: string): void;
   updatePrefs(patch: Partial<Preferences>): void;
+  updateTheme(patch: Partial<ThemePrefs>): void;
 }
 
 export interface HouseholdInput {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { DEFAULT_THEME, type ThemePrefs } from "@/lib/theme";
 import { DEFAULT_PREFS } from "@/lib/services/authService";
 import { canManageHousehold } from "@/lib/permissions";
 import { currentHousehold, currentUser, membersOf, type MemberView, myHouseholds } from "@/lib/selectors";
@@ -17,6 +18,7 @@ export interface AppState {
   canManage: boolean;
   isOwner: boolean;
   prefs: Preferences;
+  theme: ThemePrefs;
   nameOf: (id: string) => string;
   userById: (id: string) => User | undefined;
 }
@@ -48,6 +50,7 @@ export function useApp(): AppState | null {
       canManage: canManageHousehold(db, user, household.id),
       isOwner: role === "OWNER",
       prefs: { ...DEFAULT_PREFS, ...db.prefs[user.id] },
+      theme: { ...DEFAULT_THEME, ...db.prefs[user.id]?.theme },
       nameOf: (id: string) => (id === user.id ? "You" : members.find((m) => m.user.id === id)?.user.name ?? "Someone"),
       userById: (id: string) => members.find((m) => m.user.id === id)?.user,
     };

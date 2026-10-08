@@ -1,3 +1,5 @@
+import type { ThemePrefs } from "@/lib/theme";
+
 export type ID = string;
 export type ISODate = string;
 
@@ -213,7 +215,7 @@ export interface GalleryPhoto {
 
 export interface Preferences {
   hiddenUnlocked?: boolean;
-  darkMode: boolean;
+  theme?: Partial<ThemePrefs>;
   currency: string;
   language: string;
   notifications: boolean;
