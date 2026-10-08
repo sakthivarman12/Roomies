@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #f0f2f8;
+  --border: #e6e8f0;
+  --ink: #14162b;
+  --muted: #6b7088;
+  --primary: #4338ca;
+  --primary-ink: #ffffff;
+  --primary-soft: #e8e9fb;
+  --success: #0f9d6c;
+  --success-soft: #def5ec;
+  --warning: #d97706;
+  --warning-soft: #fdf0d9;
+  --danger: #d9435a;
+  --danger-soft: #fde4e8;
+  --info: #2563eb;
+  --info-soft: #dfe9fd;
+  --violet: #7c3aed;
+  --violet-soft: #ece4fd;
+  --shadow-sm: 0 1px 2px rgb(20 22 43 / 0.04), 0 1px 1px rgb(20 22 43 / 0.03);
+  --shadow-md: 0 8px 24px -8px rgb(20 22 43 / 0.12), 0 2px 6px rgb(20 22 43 / 0.04);
+  --shadow-lg: 0 24px 60px -16px rgb(20 22 43 / 0.28);
+  --hero-from: #3730a3;
+  --hero-to: #5b4fe0;
+  --c-indigo: #4f46e5;
+  --c-amber: #f59e0b;
+  --c-sky: #0ea5e9;
+  --c-violet: #8b5cf6;
+  --c-green: #10b981;
+  --c-orange: #f97316;
+  --c-teal: #14b8a6;
+  --c-pink: #ec4899;
+  --c-brown: #a16207;
+  --c-slate: #64748b;
+  --c-gray: #9ca3af;
+  --nav-h: 76px;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c0d1a;
+  --surface: #151729;
+  --surface-2: #1c1f36;
+  --border: #272a45;
+  --ink: #eceefb;
+  --muted: #9a9fbd;
+  --primary: #8b83ff;
+  --primary-ink: #0c0d1a;
+  --primary-soft: #26285a;
+  --success: #34d399;
+  --success-soft: #0f3a2e;
+  --warning: #fbbf24;
+  --warning-soft: #3d2f0c;
+  --danger: #fb7185;
+  --danger-soft: #45161f;
+  --info: #60a5fa;
+  --info-soft: #15294f;
+  --violet: #a78bfa;
+  --violet-soft: #2c2257;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 24px 60px -16px rgb(0 0 0 / 0.7);
+  --hero-from: #2a2580;
+  --hero-to: #4338ca;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface-2);
+  --color-line: var(--border);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-ink: var(--primary-ink);
+  --color-primary-soft: var(--primary-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --shadow-card: var(--shadow-sm);
+  --shadow-float: var(--shadow-md);
+  --radius-card: 24px;
+}
+
+html {
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: none;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes pop {
+  0% { transform: scale(0.4); }
+  60% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.receipt-edge {
+  --r: 7px;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(var(--r) * 2) 100%;
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(var(--r) * 2) 100%;
+}
+
+@media print {
+  body * { visibility: hidden; }
+  #printable-receipt, #printable-receipt * { visibility: visible; }
+  #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Roomies",
+  "short_name": "Roomies",
+  "description": "Live together. Split smarter.",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#f6f7fb",
+  "theme_color": "#4338ca",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
