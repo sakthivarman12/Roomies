@@ -65,7 +65,7 @@ export function RoommatesPanel() {
         );
       })}
 
-      <Modal open={Boolean(target)} onClose={() => setManage(null)} title={target ? `Manage ${target.user.name}` : ""} description={target ? `${target.user.email} · ${target.member.role}` : ""}>
+      <Modal open={Boolean(target)} onClose={() => setManage(null)} title={target ? `Manage ${target.user.name}` : ""} description={target ? `${target.user.email} · ${roleLabel(target.member.role)}` : ""}>
         {target && (
           <div className="space-y-2.5 pb-3">
             {app.isOwner && (

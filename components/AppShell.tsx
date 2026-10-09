@@ -1,5 +1,6 @@
 "use client";
 
+import { roleLabel } from "@/lib/roleLabel";
 import { motion } from "framer-motion";
 import { Bell, ChartNoAxesColumn, Building2, Home, Map as MapIcon, Receipt, Sparkles, User } from "lucide-react";
 import Link from "next/link";
@@ -92,7 +93,7 @@ function Sidebar({ path }: { path: string }) {
       {app && (
         <Link href="/profile" className="mt-4 flex items-center gap-3 rounded-2xl p-2 hover:bg-surface2">
           <Avatar user={app.user} size="sm" />
-          <span className="min-w-0"><span className="block truncate text-sm font-bold">{app.user.name}</span><span className="block text-[11px] text-muted">{app.role}</span></span>
+          <span className="min-w-0"><span className="block truncate text-sm font-bold">{app.user.name}</span><span className="block text-[11px] text-muted">{roleLabel(app.role)}</span></span>
         </Link>
       )}
     </aside>
