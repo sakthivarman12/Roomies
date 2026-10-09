@@ -22,10 +22,12 @@ export default function Splash() {
 
   // Wait for the Supabase load so a signed-in user isn't sent to /welcome before their data arrives.
   useEffect(() => {
+    console.log("[debug] splash ready", { ready });
     if (!ready) return;
     let t: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
     whenSynced().then(() => {
+      console.log("[debug] splash synced", { target: target.current });
       if (!cancelled) t = setTimeout(() => router.replace(target.current), 1500);
     });
     return () => {

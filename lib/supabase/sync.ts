@@ -152,11 +152,14 @@ export function startSync(local: Db, onRemote: (db: Db) => void): void {
   if (!client) return;
   queue = queue.then(async () => {
     const session = await signedInSession(client);
+    console.log("[debug] sync start", { hasSession: !!session });
     if (!session) return;
     const remote = fromRows(await fetchRows(client), local.session);
     baseline = new Map([...snapshot(remote)].map(([key, row]) => [key, JSON.stringify(row.data)]));
     const isNewProfile = attachAccount(remote, session.user);
+    console.log("[debug] sync attached", { userId: remote.session.userId, isNewProfile });
     onRemote(remote);
+    console.log("[debug] sync done");
     if (isNewProfile) pushDb(remote);
   }).catch((err) => {
     syncEnabled = false;
