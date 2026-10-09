@@ -15,6 +15,7 @@ import { useApp } from "@/hooks/useApp";
 import { money, relativeTime } from "@/lib/format";
 import { netBalance } from "@/lib/selectors";
 import { roomService, transferOwnership } from "@/lib/services";
+import { roleLabel } from "@/lib/roleLabel";
 import type { Role } from "@/types";
 
 const ROLE_TONE = { OWNER: "violet", ADMIN: "info", MEMBER: "neutral" } as const;
@@ -49,7 +50,7 @@ export function RoommatesPanel() {
                 <p className="flex items-center gap-2 truncate text-[15px] font-extrabold">{user.name}{user.id === app.user.id && <span className="text-xs font-semibold text-muted">(you)</span>}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   {member.kind === "guest" && <Badge tone="warning">Friend</Badge>}
-                  <Badge tone={ROLE_TONE[member.role]} icon={member.role === "OWNER" ? <Crown className="h-3 w-3" /> : member.role === "ADMIN" ? <ShieldCheck className="h-3 w-3" /> : undefined}>{member.role}</Badge>
+                  <Badge tone={ROLE_TONE[member.role]} icon={member.role === "OWNER" ? <Crown className="h-3 w-3" /> : member.role === "ADMIN" ? <ShieldCheck className="h-3 w-3" /> : undefined}>{roleLabel(member.role)}</Badge>
                   <span className={`tnum text-xs font-bold ${Math.abs(net) < 0.01 ? "text-success" : net > 0 ? "text-success" : "text-danger"}`}>{Math.abs(net) < 0.01 ? "Settled" : net > 0 ? `Owed ${money(net)}` : `Owes ${money(-net)}`}</span>
                 </div>
                 <p className="mt-1 text-[11px] text-muted">{chores} chore{chores === 1 ? "" : "s"} · Last active {lastActivity(user.id)}</p>

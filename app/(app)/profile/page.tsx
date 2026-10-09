@@ -18,6 +18,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useAction } from "@/hooks/useAction";
 import { useApp } from "@/hooks/useApp";
 import { authService, devService, roomService } from "@/lib/services";
+import { roleLabel } from "@/lib/roleLabel";
 
 function Row({ icon, title, hint, children, onClick }: { icon: React.ReactNode; title: string; hint?: string; children?: React.ReactNode; onClick?: () => void }) {
   const inner = (
@@ -78,7 +79,7 @@ export default function ProfilePage() {
             <h2 className="truncate text-xl font-extrabold">{user.name}</h2>
             <p className="truncate text-sm text-muted">{user.email}</p>
             {user.phone && <p className="text-sm text-muted">{user.phone}</p>}
-            <div className="mt-2 flex flex-wrap gap-1.5"><Badge tone={app.isOwner ? "violet" : app.canManage ? "info" : "neutral"}>{app.role}</Badge><Badge tone="info">{household.name}</Badge></div>
+            <div className="mt-2 flex flex-wrap gap-1.5"><Badge tone={app.isOwner ? "violet" : app.canManage ? "info" : "neutral"}>{roleLabel(app.role)}</Badge><Badge tone="info">{household.name}</Badge></div>
           </div>
         </Card>
         <Button variant="secondary" block onClick={actions.editProfile}><UserRound className="h-4 w-4" />Edit profile</Button>
