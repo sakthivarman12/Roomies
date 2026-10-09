@@ -1,5 +1,5 @@
 import type {
-  Announcement, Bill, EventItem, GalleryPhoto, MemberLocation, RsvpStatus, Story, Chore, Db, Expense, ExpenseCategory, ExpenseSplit, Frequency, Household,
+  Announcement, Bill, EventItem, FundEntry, GalleryFolder, JoinRequest, MemberKind, Restrictions, GalleryPhoto, MemberLocation, RsvpStatus, Story, Chore, Db, Expense, ExpenseCategory, ExpenseSplit, Frequency, Household,
   HouseholdMember, PaymentMethod, Preferences, Priority, Receipt, Role, ShoppingItem, SplitMode, User,
 } from "@/types";
 import type { ThemePrefs } from "@/lib/theme";
@@ -15,19 +15,30 @@ export interface AuthService {
   getCurrentUser(): User | null;
   requestPasswordReset(email: string): void;
   resetPassword(email: string, newPassword: string): void;
-  updateProfile(patch: Partial<Pick<User, "name" | "phone" | "email" | "photo" | "avatarColor">>): User;
+  updateProfile(patch: Partial<Pick<User, "name" | "phone" | "email" | "photo" | "avatarColor" | "upiId">>): User;
   changePassword(current: string, next: string): void;
   updatePrefs(patch: Partial<Preferences>): void;
   updateTheme(patch: Partial<ThemePrefs>): void;
 }
 
+export interface SharedCostInput { title: string; category: ExpenseCategory; amount: number; dueDay: number }
+
 export interface HouseholdInput {
   name: string; address: string; monthlyRent: number; rentDueDay: number; rooms: number; rules: string[];
+  /** Recurring shared costs to set up as bills (rent, Wi-Fi, drinking water, sump/tank water, outside help…). */
+  sharedCosts?: SharedCostInput[];
+  requireApproval?: boolean;
 }
+
+export interface ApprovalInput { kind: MemberKind; restrictions: Restrictions; stayUntil?: string }
 
 export interface RoomService {
   createHousehold(input: HouseholdInput): Household;
-  joinByCode(code: string): Household;
+  joinByCode(code: string): { household: Household; status: "joined" | "pending" };
+  approveRequest(requestId: string, input: ApprovalInput): void;
+  rejectRequest(requestId: string): void;
+  updateMemberAccess(householdId: string, userId: string, input: ApprovalInput): void;
+  getPendingRequests(): JoinRequest[];
   switchHousehold(id: string): void;
   updateHousehold(id: string, patch: Partial<HouseholdInput>): Household;
   addMember(householdId: string, input: { name: string; email: string }): HouseholdMember;
@@ -40,6 +51,7 @@ export interface RoomService {
 export interface ExpenseInput {
   title: string; amount: number; category: ExpenseCategory; date: string; paidBy: string;
   splitMode: SplitMode; splits: ExpenseSplit[]; notes?: string; receiptImage?: string;
+  paidFromFund?: boolean; source?: string;
 }
 
 export interface ExpenseService {
@@ -51,7 +63,7 @@ export interface ExpenseService {
 export interface PaymentService {
   settle(input: { toUserId: string; amount: number; method: PaymentMethod; note?: string }): { receipt: Receipt };
   request(fromUserId: string, amount: number): void;
-  payBill(billId: string, method: PaymentMethod): { receipt: Receipt };
+  payBill(billId: string, method: PaymentMethod, fromFund?: boolean): { receipt: Receipt };
 }
 
 export interface BillInput {
@@ -101,7 +113,10 @@ export interface EventService {
 }
 
 export interface GalleryService {
-  add(photos: { src: string; caption?: string; kind?: "image" | "video"; mediaId?: string }[], hidden: boolean): GalleryPhoto[];
+  add(photos: { src: string; caption?: string; kind?: "image" | "video"; mediaId?: string }[], hidden: boolean, folderId?: string): GalleryPhoto[];
+  createFolder(name: string): GalleryFolder;
+  deleteFolder(id: string): void;
+  movePhoto(id: string, folderId: string | null): void;
   setBackground(id: string, on: boolean): void;
   setHidden(id: string, hidden: boolean): void;
   setCaption(id: string, caption: string): void;
@@ -126,6 +141,10 @@ export interface GeoService {
   removeStory(id: string): void;
   markStoryViewed(id: string): void;
   getLocations(): MemberLocation[];
+}
+
+export interface FundService {
+  contribute(input: { amount: number; method: PaymentMethod; note?: string }): FundEntry;
 }
 
 export interface NotificationService {

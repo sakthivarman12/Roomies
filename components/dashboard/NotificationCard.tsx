@@ -10,6 +10,7 @@ const TONE: Record<NotificationType, string> = {
   expense_added: "bg-info-soft text-info", expense_split: "bg-info-soft text-info", payment_received: "bg-success-soft text-success",
   payment_requested: "bg-warning-soft text-warning", chore_assigned: "bg-violet-soft text-violet", chore_overdue: "bg-danger-soft text-danger",
   bill_reminder: "bg-warning-soft text-warning", announcement: "bg-violet-soft text-violet",
+  join_request: "bg-info-soft text-info", fund: "bg-success-soft text-success",
 };
 
 export function NotificationCard({ n, onRead }: { n: AppNotification; onRead: () => void }) {

@@ -15,7 +15,7 @@ import type { AppNotification, NotificationType, PopupStyle } from "@/types";
 
 const ROUTES: Record<NotificationType, string> = {
   expense_added: "/expenses", expense_split: "/expenses", payment_received: "/transactions", payment_requested: "/home",
-  chore_assigned: "/chores", chore_overdue: "/chores", bill_reminder: "/bills", announcement: "/house",
+  chore_assigned: "/chores", chore_overdue: "/chores", bill_reminder: "/bills", announcement: "/house", join_request: "/profile", fund: "/fund",
 };
 
 const PARTICLES = Array.from({ length: 16 }, (_, i) => ({ angle: (i / 16) * Math.PI * 2, dist: 60 + (i % 3) * 22, size: 6 + (i % 4) * 2, hue: i % 4 }));

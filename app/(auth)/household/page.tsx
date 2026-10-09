@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { ExpenseCategory } from "@/types";
 import { useState } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +14,12 @@ import { useGuard } from "@/hooks/useGuard";
 
 type Mode = "create" | "join";
 
+const SHARED_COSTS: { title: string; category: ExpenseCategory }[] = [
+  { title: "Rent", category: "Rent" }, { title: "Wi-Fi", category: "Internet" }, { title: "Drinking water", category: "Water" },
+  { title: "Sump water", category: "Water" }, { title: "Tank water", category: "Water" }, { title: "Electricity", category: "Electricity" },
+  { title: "Gas cylinder", category: "Other" }, { title: "Maid / cook", category: "Cleaning" }, { title: "Outside household work", category: "Maintenance" },
+];
+
 export default function HouseholdPage() {
   const ok = useGuard("auth-only");
   const router = useRouter();
@@ -22,6 +29,8 @@ export default function HouseholdPage() {
   const [mode, setMode] = useState<Mode>("create");
   const [error, setError] = useState("");
   const [code, setCode] = useState("");
+  const [requireApproval, setRequireApproval] = useState(true);
+  const [costs, setCosts] = useState<{ title: string; category: ExpenseCategory; amount: string; on: boolean }[]>(SHARED_COSTS.map((c) => ({ ...c, amount: "", on: false })));
   const [form, setForm] = useState({ name: "", address: "", rent: "", due: "5", rooms: "2", rules: "Clean up after cooking\nQuiet hours after 11 PM" });
   if (!ok) return null;
 
@@ -35,6 +44,7 @@ export default function HouseholdPage() {
       const h = roomService.createHousehold({
         name: form.name, address: form.address, monthlyRent: Number(form.rent) || 0, rentDueDay: Number(form.due) || 5,
         rooms: Number(form.rooms) || 1, rules: form.rules.split("\n").map((r) => r.trim()).filter(Boolean),
+        requireApproval, sharedCosts: costs.filter((c) => c.on).map((c) => ({ title: c.title, category: c.category, amount: Number(c.title === "Rent" && !c.amount ? form.rent : c.amount) || 0, dueDay: Number(form.due) || 5 })),
       });
       toast.show(`${h.name} created`);
       router.replace("/onboarding/roommates");
@@ -47,9 +57,14 @@ export default function HouseholdPage() {
     e.preventDefault();
     setError("");
     try {
-      const h = roomService.joinByCode(code);
-      toast.show(`Welcome to ${h.name}!`);
-      router.replace("/onboarding/preferences");
+      const { household: h, status } = roomService.joinByCode(code);
+      if (status === "pending") {
+        toast.show(`Request sent to ${h.name}`, "info");
+        router.replace("/pending");
+      } else {
+        toast.show(`Welcome to ${h.name}!`);
+        router.replace("/onboarding/preferences");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't join household.");
     }
@@ -72,6 +87,23 @@ export default function HouseholdPage() {
               <Input label="Rent due day" inputMode="numeric" value={form.due} onChange={set("due")} placeholder="5" />
             </div>
             <Input label="Number of rooms" inputMode="numeric" value={form.rooms} onChange={set("rooms")} />
+            <fieldset className="space-y-2.5">
+              <legend className="px-1 text-[13px] font-semibold text-muted">Shared monthly costs</legend>
+              <p className="px-1 text-xs text-muted">Tick what everyone chips in for. Each becomes a recurring bill you can pay from the room fund or personally.</p>
+              {costs.map((c, i) => (
+                <div key={c.title} className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-2.5 pl-3">
+                  <input type="checkbox" aria-label={c.title} checked={c.on} onChange={(e) => setCosts((cs) => cs.map((x, j) => (j === i ? { ...x, on: e.target.checked } : x)))} className="h-5 w-5 accent-[var(--primary)]" />
+                  <span className="flex-1 text-sm font-semibold">{c.title}</span>
+                  <input aria-label={`${c.title} amount`} inputMode="numeric" placeholder="₹" disabled={!c.on} value={c.title === "Rent" && c.on && !c.amount ? form.rent : c.amount}
+                    onChange={(e) => setCosts((cs) => cs.map((x, j) => (j === i ? { ...x, amount: e.target.value.replace(/[^0-9]/g, "") } : x)))}
+                    className="tnum min-h-[40px] w-24 rounded-xl border border-line bg-surface2 px-3 text-right text-sm font-bold disabled:opacity-40" />
+                </div>
+              ))}
+            </fieldset>
+            <label className="flex items-center gap-3 rounded-2xl bg-surface2 p-3.5">
+              <input type="checkbox" checked={requireApproval} onChange={(e) => setRequireApproval(e.target.checked)} className="h-5 w-5 accent-[var(--primary)]" />
+              <span><span className="block text-sm font-bold">Approve new joiners</span><span className="block text-xs text-muted">Friends and new roommates wait for your OK, and you choose what they can see.</span></span>
+            </label>
             <Textarea label="House rules" hint="One per line." value={form.rules} onChange={set("rules")} />
             {error && <p role="alert" className="px-1 text-sm font-medium text-danger">{error}</p>}
             <Button type="submit" size="lg" block>Create household</Button>

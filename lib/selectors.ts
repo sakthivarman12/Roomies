@@ -46,7 +46,7 @@ export function householdExpenses(db: Db, householdId: string): Expense[] {
 export function pairBalance(db: Db, householdId: string, me: string, other: string): number {
   let bal = 0;
   for (const e of db.expenses) {
-    if (e.householdId !== householdId) continue;
+    if (e.householdId !== householdId || e.paidFromFund) continue;
     if (e.paidBy === me) bal += e.splits.find((s) => s.userId === other)?.amount ?? 0;
     if (e.paidBy === other) bal -= e.splits.find((s) => s.userId === me)?.amount ?? 0;
   }
@@ -89,10 +89,12 @@ export function transactionsFor(db: Db, householdId: string, me: string): Transa
   const rows: Transaction[] = [];
   for (const e of householdExpenses(db, householdId)) {
     const myShare = e.splits.find((s) => s.userId === me)?.amount ?? 0;
-    const paid = e.paidBy === me;
-    const net = paid ? round2(e.amount - myShare) : -myShare;
+    const paid = e.paidBy === me && !e.paidFromFund;
+    const net = e.paidFromFund ? 0 : paid ? round2(e.amount - myShare) : -myShare;
     let settled = true;
-    if (paid) {
+    if (e.paidFromFund) {
+      settled = true;
+    } else if (paid) {
       settled = e.splits.filter((s) => s.userId !== me).every((s) => pairBalance(db, householdId, me, s.userId) <= 0);
     } else if (myShare > 0) {
       settled = pairBalance(db, householdId, me, e.paidBy) >= 0;

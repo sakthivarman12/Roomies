@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChevronDown, ClipboardPlus, HandCoins, Plus, ShoppingBasket } from "lucide-react";
+import { UserPlus, Bell, ChevronDown, ClipboardPlus, HandCoins, Plus, ShoppingBasket } from "lucide-react";
 import Link from "next/link";
 import { useActions } from "@/components/AppActions";
 import { AddMenu } from "@/components/AddMenu";
@@ -20,7 +20,8 @@ import { useAction } from "@/hooks/useAction";
 import { useApp } from "@/hooks/useApp";
 import { activityFeed } from "@/lib/activity";
 import { daysFromNow, greeting, relativeTime } from "@/lib/format";
-import { householdExpenses, nextInRotation, pairBalance } from "@/lib/selectors";
+import { visibleExpenses } from "@/lib/access";
+import { nextInRotation, pairBalance } from "@/lib/selectors";
 import { choreService, paymentService } from "@/lib/services";
 import { Receipt, Sparkles } from "lucide-react";
 
@@ -34,9 +35,10 @@ export default function HomePage() {
   const unread = db.notifications.filter((n) => n.userId === user.id && n.householdId === household.id && !n.read).length;
   const bills = db.bills.filter((b) => b.householdId === household.id && !b.paid).sort((a, b) => +new Date(a.dueDate) - +new Date(b.dueDate));
   const dueThisWeek = bills.filter((b) => daysFromNow(b.dueDate) <= 7).length;
-  const expenses = householdExpenses(db, household.id).slice(0, 4);
+  const expenses = visibleExpenses(db, household.id, user.id).slice(0, 4);
   const myChores = db.chores.filter((c) => c.householdId === household.id && !c.completed && c.assignedTo === user.id).sort((a, b) => +new Date(a.dueDate) - +new Date(b.dueDate));
   const todayChore = myChores.find((c) => daysFromNow(c.dueDate) <= 0);
+  const waiting = db.joinRequests.filter((r) => r.householdId === household.id && r.status === "pending");
   const others = app.members.filter((m) => m.user.id !== user.id);
   const feed = activityFeed(db, household.id, 5);
 
@@ -59,6 +61,12 @@ export default function HomePage() {
         </Link>
       </header>
       <p className="-mt-4 px-1 text-sm text-muted">{tagline}</p>
+      {app.canManage && waiting.length > 0 && (
+        <button onClick={() => actions.reviewAccess({ requestId: waiting[0].id, userId: waiting[0].userId })} className="flex w-full items-center gap-3 rounded-3xl border border-primary/40 bg-primary-soft p-3.5 text-left">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-primary-ink"><UserPlus className="h-5 w-5" /></span>
+          <span className="flex-1"><span className="block text-sm font-extrabold">{waiting.length} new roommate request{waiting.length > 1 ? "s" : ""}</span><span className="block text-xs text-muted">Tap to review and set what they can see</span></span>
+        </button>
+      )}
 
       <StoriesStrip />
       <HeroCard />

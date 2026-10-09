@@ -1,3 +1,4 @@
+import { pendingRequestFor } from "@/lib/access";
 import { currentHousehold, currentUser } from "@/lib/selectors";
 import { dbStore } from "@/store/db";
 
@@ -5,7 +6,7 @@ import { dbStore } from "@/store/db";
 export function selectedHouseholdPath(): string {
   const db = dbStore.read();
   if (!currentUser(db)) return "/welcome";
-  return currentHousehold(db) ? "/home" : "/household";
+  return currentHousehold(db) ? "/home" : pendingRequestFor(db, currentUser(db)!.id) ? "/pending" : "/household";
 }
 
 export const NAV_ITEMS = [

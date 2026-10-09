@@ -85,11 +85,11 @@ async function resizePhoto(file: File): Promise<string> {
 export function ProfileSheet({ open, onClose }: SheetProps) {
   const app = useApp();
   const toast = useToast();
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", upiId: "" });
   const [photo, setPhoto] = useState<string | undefined>();
   const [error, setError] = useState("");
   useOnOpen(open, () => {
-    if (app) { setForm({ name: app.user.name, email: app.user.email, phone: app.user.phone }); setPhoto(app.user.photo); setError(""); }
+    if (app) { setForm({ name: app.user.name, email: app.user.email, phone: app.user.phone, upiId: app.user.upiId ?? "" }); setPhoto(app.user.photo); setError(""); }
   });
   if (!app) return null;
   const submit = () => {
@@ -111,7 +111,8 @@ export function ProfileSheet({ open, onClose }: SheetProps) {
         </div>
         <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-        <Input label="Phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        <Input label="Phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} hint="Roommates use this to call or WhatsApp you." />
+        <Input label="UPI ID" value={form.upiId} onChange={(e) => setForm({ ...form, upiId: e.target.value.trim() })} placeholder="name@okaxis" hint="Roommates pay you back to this ID via GPay, PhonePe, Paytm…" />
         <ErrorLine error={error} />
       </div>
     </BottomSheet>

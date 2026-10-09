@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { EyeOff, ImagePlus, Images, Lock, MonitorPlay, Play, Trash2 } from "lucide-react";
+import { Camera, EyeOff, FolderOpen, FolderPlus, ImagePlus, Images, Lock, MonitorPlay, Play, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Modal } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
@@ -39,6 +39,8 @@ export function GalleryPanel() {
   const [folder, setFolder] = useState<Folder>("all");
   const [openId, setOpenId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [dir, setDir] = useState<string>("all"); // "all" | "none" (unfiled) | folder id
+  const [newFolder, setNewFolder] = useState<string | null>(null);
   if (!app) return null;
 
   const unlocked = Boolean(app.prefs.hiddenUnlocked);
@@ -47,7 +49,10 @@ export function GalleryPanel() {
   const shared = mine.filter((p) => !p.hidden);
   const hidden = mine.filter((p) => p.hidden && p.addedBy === app.user.id);
   const inHidden = unlocked && folder === "hidden";
-  const list: GalleryPhoto[] = inHidden ? hidden : shared;
+  const folders = app.db.galleryFolders.filter((f) => f.householdId === app.household.id);
+  const activeFolder = folders.find((f) => f.id === dir) ?? null;
+  const inDir = dir === "all" ? shared : dir === "none" ? shared.filter((p) => !p.folderId) : shared.filter((p) => p.folderId === dir);
+  const list: GalleryPhoto[] = inHidden ? hidden : inDir;
   const current = openId ? mine.find((p) => p.id === openId && (!p.hidden || (unlocked && p.addedBy === app.user.id))) ?? null : null;
   const bgCount = shared.filter((p) => p.useAsBackground).length;
 
@@ -56,7 +61,7 @@ export function GalleryPanel() {
     setBusy(true);
     try {
       const items = await Promise.all([...files].map((f) => processMediaFile(f)));
-      run(() => galleryService.add(items.map((m) => ({ src: m.src ?? "", kind: m.kind, mediaId: m.mediaId })), inHidden), `${items.length} item${items.length > 1 ? "s" : ""} added${inHidden ? " to hidden folder" : ""}`);
+      run(() => galleryService.add(items.map((m) => ({ src: m.src ?? "", kind: m.kind, mediaId: m.mediaId })), inHidden, activeFolder?.id), `${items.length} item${items.length > 1 ? "s" : ""} added${inHidden ? " to hidden folder" : activeFolder ? ` to ${activeFolder.name}` : ""}`);
     } catch (err) {
       toast.show(err instanceof Error ? err.message : "Couldn't add those files.", "error");
     } finally {
@@ -74,10 +79,31 @@ export function GalleryPanel() {
       )}
       {inHidden && <p className="flex items-center gap-2 rounded-2xl bg-violet-soft px-4 py-3 text-xs font-semibold text-violet"><Lock className="h-4 w-4 shrink-0" />Only you can see this folder. Triple-tap the Gallery tab to lock it again.</p>}
 
-      <label className="flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-2xl bg-primary-soft text-sm font-bold text-primary">
-        <ImagePlus className="h-5 w-5" /> {busy ? "Adding…" : inHidden ? "Add to hidden folder" : "Add photos or videos"}
-        <input type="file" accept="image/*,video/*" multiple className="sr-only" disabled={busy} onChange={(e) => { void upload(e.target.files); e.target.value = ""; }} />
-      </label>
+      {!inHidden && (
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4" role="tablist" aria-label="Gallery folders">
+          {[{ id: "all", name: `All · ${shared.length}` }, { id: "none", name: "Unfiled" }, ...folders.map((f) => ({ id: f.id, name: `${f.name} · ${shared.filter((p) => p.folderId === f.id).length}` }))].map((f) => (
+            <button key={f.id} role="tab" aria-selected={dir === f.id} onClick={() => setDir(f.id)}
+              className={`flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold ${dir === f.id ? "border-primary bg-primary-soft text-primary" : "border-line bg-surface text-muted"}`}>
+              {f.id !== "all" && f.id !== "none" && <FolderOpen className="h-3.5 w-3.5" />}{f.name}
+            </button>
+          ))}
+          <button onClick={() => setNewFolder("")} className="flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full border border-dashed border-primary px-3.5 text-[13px] font-bold text-primary"><FolderPlus className="h-4 w-4" />New folder</button>
+        </div>
+      )}
+      {activeFolder && !inHidden && (activeFolder.createdBy === app.user.id || app.canManage) && (
+        <button onClick={() => { run(() => galleryService.deleteFolder(activeFolder.id), "Folder deleted — photos kept"); setDir("all"); }} className="px-1 text-xs font-semibold text-muted underline">Delete folder “{activeFolder.name}” (photos are kept)</button>
+      )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-2xl bg-primary-soft text-sm font-bold text-primary">
+          <ImagePlus className="h-5 w-5" /> {busy ? "Adding…" : inHidden ? "Add (hidden)" : activeFolder ? `Add to ${activeFolder.name}` : "Add photos"}
+          <input type="file" accept="image/*,video/*" multiple className="sr-only" disabled={busy} onChange={(e) => { void upload(e.target.files); e.target.value = ""; }} />
+        </label>
+        <label className="flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-2xl border border-line text-sm font-bold">
+          <Camera className="h-5 w-5" /> Take photo
+          <input type="file" accept="image/*,video/*" capture="environment" className="sr-only" disabled={busy} onChange={(e) => { void upload(e.target.files); e.target.value = ""; }} />
+        </label>
+      </div>
 
       {!inHidden && <p className="px-1 text-xs text-muted">{bgCount > 0 ? `${bgCount} photo${bgCount > 1 ? "s" : ""} slowly rotate inside the Home summary card.` : "Open a photo and switch on “Home background” to show it in the Home summary card."}</p>}
 
@@ -97,6 +123,10 @@ export function GalleryPanel() {
         </ul>
       )}
 
+      <Modal open={newFolder !== null} onClose={() => setNewFolder(null)} title="New folder" description="Everyone in the house can see it"
+        footer={<Button block size="lg" onClick={() => { const n = newFolder ?? ""; const f = run(() => galleryService.createFolder(n), `Folder “${n.trim()}” created`); if (f) { setDir(f.id); setNewFolder(null); } }}>Create folder</Button>}>
+        <div className="pb-3"><input aria-label="Folder name" autoFocus value={newFolder ?? ""} onChange={(e) => setNewFolder(e.target.value)} placeholder="Trip to Ooty" className="min-h-[48px] w-full rounded-2xl border border-line bg-surface px-4 text-[15px] focus:border-primary focus:outline-none" /></div>
+      </Modal>
       <Modal open={Boolean(current)} onClose={() => setOpenId(null)} title={current?.caption || "Photo"} description={current ? `Added by ${app.nameOf(current.addedBy)}` : undefined}>
         {current && (
           <div className="space-y-4 pb-3">
@@ -107,6 +137,12 @@ export function GalleryPanel() {
                 <div className="flex-1"><p className="text-sm font-bold">Home background</p><p className="text-xs text-muted">Fades slowly inside the Home card</p></div>
                 <Toggle label="Use as Home background" checked={current.useAsBackground} onChange={(v) => run(() => galleryService.setBackground(current.id, v))} />
               </div>
+            )}
+            {!current.hidden && (current.addedBy === app.user.id || app.canManage) && (
+              <label className="flex items-center gap-3 rounded-2xl bg-surface2 p-3.5 text-sm font-bold"><FolderOpen className="h-5 w-5 text-primary" /><span className="flex-1">Folder</span>
+                <select aria-label="Move to folder" value={current.folderId ?? ""} onChange={(e) => run(() => galleryService.movePhoto(current.id, e.target.value || null), "Moved")} className="min-h-[40px] rounded-xl border border-line bg-surface px-2 text-sm font-semibold">
+                  <option value="">Unfiled</option>{folders.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                </select></label>
             )}
             {current.addedBy === app.user.id && unlocked && (
               <Button variant="secondary" block onClick={() => { run(() => galleryService.setHidden(current.id, !current.hidden), current.hidden ? "Moved back to Photos" : "Moved to hidden folder"); setOpenId(null); }}>

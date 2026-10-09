@@ -41,16 +41,46 @@ export const localEventService: EventService = {
 };
 
 export const localGalleryService: GalleryService = {
-  add(photos, hidden) {
+  add(photos, hidden, folderId) {
     return mutate(({ db, user, household }) => {
       if (!photos.length) throw new ServiceError("Choose at least one photo.");
       const created = photos.map((p) => ({
-        id: uid(), householdId: household.id, src: p.src, kind: p.kind ?? ("image" as const), mediaId: p.mediaId,
+        id: uid(), householdId: household.id, src: p.src, kind: p.kind ?? ("image" as const), mediaId: p.mediaId, folderId: hidden ? undefined : folderId,
         caption: p.caption?.trim() || undefined, addedBy: user.id,
         hidden, useAsBackground: !hidden && (p.kind ?? "image") === "image", createdAt: nowIso(),
       }));
       db.galleryPhotos.unshift(...created);
       return created;
+    });
+  },
+
+  createFolder(name) {
+    return mutate(({ db, user, household }) => {
+      if (name.trim().length < 1) throw new ServiceError("Name the folder.");
+      if (db.galleryFolders.some((f) => f.householdId === household.id && f.name.toLowerCase() === name.trim().toLowerCase())) throw new ServiceError("A folder with that name already exists.");
+      const folder = { id: uid(), householdId: household.id, name: name.trim(), createdBy: user.id, createdAt: nowIso() };
+      db.galleryFolders.push(folder);
+      return folder;
+    });
+  },
+
+  deleteFolder(id) {
+    mutate(({ db, user, household }) => {
+      const f = db.galleryFolders.find((x) => x.id === id && x.householdId === household.id);
+      if (!f) throw new ServiceError("Folder not found.");
+      assert(f.createdBy === user.id || canManageHousehold(db, user, household.id), "Only the creator or an admin can delete this folder.");
+      db.galleryFolders = db.galleryFolders.filter((x) => x.id !== id);
+      db.galleryPhotos.forEach((p) => { if (p.folderId === id) p.folderId = undefined; }); // photos stay, just unfiled
+    });
+  },
+
+  movePhoto(id, folderId) {
+    mutate(({ db, user, household }) => {
+      const p = db.galleryPhotos.find((x) => x.id === id && x.householdId === household.id);
+      if (!p) throw new ServiceError("Photo not found.");
+      assert(p.addedBy === user.id || canManageHousehold(db, user, household.id), "Only the uploader or an admin can move this.");
+      if (folderId && !db.galleryFolders.some((f) => f.id === folderId && f.householdId === household.id)) throw new ServiceError("Folder not found.");
+      p.folderId = folderId ?? undefined;
     });
   },
 

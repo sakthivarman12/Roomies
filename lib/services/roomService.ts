@@ -1,9 +1,9 @@
 import { AVATAR_COLORS, DEMO_PASSWORD } from "@/lib/constants";
 import { assert, canChangeRoles, canManageHousehold, canManageMembers, roleOf } from "@/lib/permissions";
-import { myHouseholds } from "@/lib/selectors";
-import { inviteCode, mockHash, nowIso, uid } from "@/lib/utils";
+import { currentHousehold, myHouseholds } from "@/lib/selectors";
 import { dbStore } from "@/store/db";
-import type { Household, HouseholdMember } from "@/types";
+import { inviteCode, mockHash, nowIso, uid } from "@/lib/utils";
+import { FULL_ACCESS, type Household, type HouseholdMember, type JoinRequest } from "@/types";
 import { mutate, mutateUser, notify, ServiceError } from "./context";
 import type { HouseholdInput, RoomService } from "./types";
 
@@ -28,7 +28,17 @@ export const localRoomService: RoomService = {
       db.households.push(household);
       db.members.push({ id: uid(), householdId: household.id, userId: user.id, role: "OWNER", joinedAt: nowIso() });
       db.invites.push({ id: uid(), householdId: household.id, code: household.inviteCode, createdBy: user.id, createdAt: nowIso() });
+      household.requireApproval = input.requireApproval ?? true;
       db.session.householdId = household.id;
+      const everyone: string[] = []; // empty = every resident when it is paid
+      (input.sharedCosts ?? []).filter((c) => c.amount > 0 && c.title.trim()).forEach((c) => {
+        const due = new Date(); due.setDate(Math.min(Math.max(c.dueDay, 1), 28));
+        if (due.getTime() < Date.now()) due.setMonth(due.getMonth() + 1);
+        db.bills.push({
+          id: uid(), householdId: household.id, title: c.title.trim(), category: c.category, amount: c.amount,
+          dueDate: due.toISOString(), recurring: true, paid: false, assignedTo: everyone, createdAt: nowIso(),
+        });
+      });
       return household;
     });
   },
@@ -40,17 +50,63 @@ export const localRoomService: RoomService = {
       const household = db.households.find((h) => h.id === invite.householdId)!;
       if (db.members.some((m) => m.householdId === household.id && m.userId === user.id)) {
         db.session.householdId = household.id;
-        return household;
+        return { household, status: "joined" as const };
       }
-      db.members.push({ id: uid(), householdId: household.id, userId: user.id, role: "MEMBER", joinedAt: nowIso() });
-      db.session.householdId = household.id;
-      notify(
-        db, household.id,
-        db.members.filter((m) => m.householdId === household.id && m.userId !== user.id).map((m) => m.userId),
-        "announcement", "New roommate", `${user.name} joined ${household.name}`,
-      );
-      return household;
+      const approvers = db.members.filter((m) => m.householdId === household.id && (m.role === "OWNER" || m.role === "ADMIN")).map((m) => m.userId);
+      if (household.requireApproval === false) {
+        db.members.push({ id: uid(), householdId: household.id, userId: user.id, role: "MEMBER", kind: "resident", restrictions: FULL_ACCESS, joinedAt: nowIso() });
+        db.session.householdId = household.id;
+        notify(db, household.id, db.members.filter((m) => m.householdId === household.id && m.userId !== user.id).map((m) => m.userId), "announcement", "New roommate", `${user.name} joined ${household.name}`);
+        return { household, status: "joined" as const };
+      }
+      if (!db.joinRequests.some((r) => r.userId === user.id && r.householdId === household.id && r.status === "pending")) {
+        db.joinRequests.push({ id: uid(), householdId: household.id, userId: user.id, status: "pending", createdAt: nowIso() });
+        notify(db, household.id, approvers, "join_request", "New roommate request", `${user.name} wants to join ${household.name}. Review it in Profile.`);
+      }
+      return { household, status: "pending" as const };
     });
+  },
+
+  approveRequest(requestId, input) {
+    mutateUser((db, user) => {
+      const req = db.joinRequests.find((r) => r.id === requestId);
+      if (!req || req.status !== "pending") throw new ServiceError("That request was already handled.");
+      assert(canManageMembers(db, user, req.householdId), "Only the owner or an admin can approve new roommates.");
+      req.status = "approved";
+      if (!db.members.some((m) => m.householdId === req.householdId && m.userId === req.userId)) {
+        db.members.push({
+          id: uid(), householdId: req.householdId, userId: req.userId, role: "MEMBER", kind: input.kind,
+          restrictions: input.restrictions, stayUntil: input.stayUntil, joinedAt: nowIso(),
+        });
+      }
+      const h = db.households.find((x) => x.id === req.householdId)!;
+      notify(db, req.householdId, [req.userId], "announcement", "You're in!", `${user.name} approved you for ${h.name}`);
+    });
+  },
+
+  rejectRequest(requestId) {
+    mutateUser((db, user) => {
+      const req = db.joinRequests.find((r) => r.id === requestId);
+      if (!req || req.status !== "pending") throw new ServiceError("That request was already handled.");
+      assert(canManageMembers(db, user, req.householdId), "Only the owner or an admin can decline requests.");
+      req.status = "rejected";
+    });
+  },
+
+  updateMemberAccess(householdId, userId, input) {
+    mutateUser((db, user) => {
+      assert(canManageMembers(db, user, householdId), "Only the owner or an admin can change access.");
+      const m = db.members.find((x) => x.householdId === householdId && x.userId === userId);
+      if (!m) throw new ServiceError("Member not found.");
+      if (m.role === "OWNER") throw new ServiceError("The owner always has full access.");
+      m.kind = input.kind; m.restrictions = input.restrictions; m.stayUntil = input.stayUntil;
+    });
+  },
+
+  getPendingRequests() {
+    const db = dbStore.read();
+    const h = currentHousehold(db);
+    return h ? db.joinRequests.filter((r): r is JoinRequest => r.householdId === h.id && r.status === "pending") : [];
   },
 
   switchHousehold(id) {

@@ -1,7 +1,7 @@
 import { AVATAR_COLORS, DB_VERSION, DEMO_PASSWORD } from "@/lib/constants";
 import { mockHash } from "@/lib/utils";
 import type {
-  MemberLocation, EventItem, GalleryPhoto, Announcement, AppNotification, Bill, Chore, Db, Expense, ExpenseCategory, ExpenseSplit,
+  FundEntry, JoinRequest, MemberLocation, EventItem, GalleryPhoto, Announcement, AppNotification, Bill, Chore, Db, Expense, ExpenseCategory, ExpenseSplit,
   HouseholdMember, Payment, Receipt, ShoppingItem, User,
 } from "@/types";
 
@@ -92,6 +92,20 @@ export function buildSeedGeo(): { locations: MemberLocation[]; stories: [] } {
   };
 }
 
+export function buildSeedAccess(requesterId?: string): { joinRequests: JoinRequest[]; fund: FundEntry[]; galleryFolders: [] } {
+  const f = (userId: string, amount: number, ago: number, note: string): FundEntry => ({
+    id: `f1000000-0000-4000-8000-${String(ago).padStart(11, "0")}${userId.slice(-1)}`, householdId: HID, userId, kind: "contribution",
+    amount, note, method: "UPI", createdAt: daysAgo(ago),
+  });
+  return {
+    joinRequests: requesterId
+      ? [{ id: "a1000000-0000-4000-8000-000000000001", householdId: HID, userId: requesterId, note: "Rahul's friend — staying for 2 weeks", status: "pending", createdAt: daysAgo(0) }]
+      : [],
+    fund: [f(U.sakthi, 2000, 9, "Monthly fund"), f(U.devi, 1500, 8, "Monthly fund"), f(U.arun, 1500, 7, "Monthly fund"), f(U.rahul, 1000, 6, "Monthly fund")],
+    galleryFolders: [],
+  };
+}
+
 export function buildSeed(): Db {
   counter = 0;
   const names: [string, string, string][] = [
@@ -101,7 +115,14 @@ export function buildSeed(): Db {
   const users: User[] = names.map(([userId, name, phone], i) => ({
     id: userId, name, email: `${name.toLowerCase()}@roomies.local`, phone,
     passwordHash: mockHash(DEMO_PASSWORD), avatarColor: AVATAR_COLORS[i], createdAt: daysAgo(90),
+    upiId: `${name.toLowerCase()}@okaxis`,
   }));
+  // A friend who has asked to join with the invite code — waiting for the owner to approve.
+  const friend: User = {
+    id: "aaaaaaa5-0000-4000-8000-000000000005", name: "Karan", email: "karan@roomies.local", phone: "9876500005", upiId: "karan@oksbi",
+    passwordHash: mockHash(DEMO_PASSWORD), avatarColor: AVATAR_COLORS[4], createdAt: daysAgo(1),
+  };
+  users.push(friend);
   const members: HouseholdMember[] = ALL.map((userId, i) => ({
     id: id("m0000000"), householdId: HID, userId, role: i === 0 ? "OWNER" : "MEMBER", joinedAt: daysAgo(90),
   }));
@@ -242,6 +263,7 @@ export function buildSeed(): Db {
     ],
     ...buildSeedMedia(),
     ...buildSeedGeo(),
+    ...buildSeedAccess(friend.id),
     receipts,
     session: { userId: null, householdId: null },
     prefs: {},

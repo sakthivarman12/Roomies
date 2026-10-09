@@ -7,6 +7,9 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { PersonChips } from "@/components/ui/Chips";
 import { AmountInput, DatePicker, Input, Select, Textarea } from "@/components/ui/Fields";
+import { PiggyBank } from "lucide-react";
+import { Toggle } from "@/components/ui/Toggle";
+import { fundBalance, restrictionsOf } from "@/lib/access";
 import { SegmentedControl } from "@/components/ui/Tabs";
 import { useReceiptOverlay } from "@/components/expenses/ReceiptOverlay";
 import { useToast } from "@/components/ui/Toast";
@@ -57,6 +60,8 @@ export function ExpenseSheet({ open, onClose, expense }: { open: boolean; onClos
   const [values, setValues] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
   const [image, setImage] = useState<string | undefined>();
+  const [fromFund, setFromFund] = useState(false);
+  const [source, setSource] = useState<string | undefined>();
   const [error, setError] = useState("");
 
   useOnOpen(open, () => {
@@ -65,10 +70,10 @@ export function ExpenseSheet({ open, onClose, expense }: { open: boolean; onClos
       setTitle(expense.title); setAmount(String(expense.amount)); setCategory(expense.category); setDate(toInputDate(expense.date));
       setPaidBy(expense.paidBy); setMode(expense.splitMode); setPeople(expense.splits.map((s) => s.userId));
       setValues(Object.fromEntries(expense.splits.map((s) => [s.userId, String(expense.splitMode === "percentage" ? round2((s.amount / expense.amount) * 100) : s.amount)])));
-      setNotes(expense.notes ?? ""); setImage(expense.receiptImage);
+      setNotes(expense.notes ?? ""); setImage(expense.receiptImage); setFromFund(Boolean(expense.paidFromFund)); setSource(expense.source);
     } else {
       setTitle(""); setAmount(""); setCategory("Groceries"); setDate(toInputDate(new Date())); setPaidBy(app.user.id);
-      setMode("equal"); setPeople(app.members.map((m) => m.user.id)); setValues({}); setNotes(""); setImage(undefined);
+      setMode("equal"); setPeople(app.members.map((m) => m.user.id)); setValues({}); setNotes(""); setImage(undefined); setFromFund(false); setSource(undefined);
     }
     setError("");
   });
@@ -88,7 +93,7 @@ export function ExpenseSheet({ open, onClose, expense }: { open: boolean; onClos
     if (result.error) return setError(result.error);
     try {
       const input = {
-        title, amount: total, category, date: fromInputDate(date), paidBy, splitMode: mode, splits: result.splits, notes, receiptImage: image,
+        title, amount: total, category, date: fromInputDate(date), paidBy, splitMode: mode, splits: result.splits, notes, receiptImage: image, paidFromFund: fromFund, source,
       };
       if (expense) {
         expenseService.update(expense.id, input);
@@ -120,7 +125,13 @@ export function ExpenseSheet({ open, onClose, expense }: { open: boolean; onClos
           <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value as ExpenseCategory)} options={CATEGORIES.map((c) => ({ value: c, label: c }))} />
           <DatePicker label="Date" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
-        <Select label="Paid by" value={paidBy} onChange={(e) => setPaidBy(e.target.value)} options={people_.map((u) => ({ value: u.id, label: u.id === app.user.id ? `${u.name} (you)` : u.name }))} />
+        {fundBalance(app.db, app.household.id) > 0 && restrictionsOf(app.db, app.user.id, app.household.id).seeFund && !editing && (
+          <div className="flex items-center gap-3 rounded-2xl bg-surface2 p-3.5">
+            <PiggyBank className="h-5 w-5 text-success" /><div className="flex-1"><p className="text-sm font-bold">Pay from room fund</p><p className="text-xs text-muted">{money(fundBalance(app.db, app.household.id))} available · nobody owes anybody</p></div>
+            <Toggle label="Pay from room fund" checked={fromFund} onChange={setFromFund} />
+          </div>
+        )}
+        {!fromFund && <Select label="Paid by" value={paidBy} onChange={(e) => setPaidBy(e.target.value)} options={people_.map((u) => ({ value: u.id, label: u.id === app.user.id ? `${u.name} (you)` : u.name }))} />}
 
         <div className="space-y-2.5">
           <p className="px-1 text-[13px] font-semibold text-muted">Split between</p>

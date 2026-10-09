@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { AccessSheet, type AccessTarget } from "@/components/sheets/AccessSheet";
 import { StoryComposer } from "@/components/map/StoryComposer";
 import { StoryViewer } from "@/components/map/StoryViewer";
 import { EventSheet } from "@/components/profile/EventsPanel";
@@ -37,6 +38,7 @@ interface Actions {
   viewStory: (userId: string) => void;
   editNotifications: () => void;
   editPermissions: () => void;
+  reviewAccess: (target: AccessTarget) => void;
 }
 
 type SheetState =
@@ -46,13 +48,13 @@ type SheetState =
   | { kind: "chore"; chore: Chore | null }
   | { kind: "bill" }
   | { kind: "payBill"; bill: Bill }
-  | { kind: "announcement" | "member" | "profile" | "password" | "household" | "switch" | "theme" | "shopping" | "event" | "photos" | "document" | "story" | "notifications" | "permissions" };
+  | { kind: "announcement" | "member" | "profile" | "password" | "household" | "switch" | "theme" | "shopping" | "event" | "photos" | "document" | "story" | "notifications" | "permissions" | "access" };
 
 const noop = () => undefined;
 const ActionsContext = createContext<Actions>({
   addExpense: noop, settle: noop, addChore: noop, addBill: noop, payBill: noop, addAnnouncement: noop, addMember: noop,
   editProfile: noop, changePassword: noop, editHousehold: noop, switchHousehold: noop, editTheme: noop,
-  addShopping: noop, addEvent: noop, addPhotos: noop, addDocument: noop, addStory: noop, viewStory: noop, editNotifications: noop, editPermissions: noop,
+  addShopping: noop, addEvent: noop, addPhotos: noop, addDocument: noop, addStory: noop, viewStory: noop, editNotifications: noop, editPermissions: noop, reviewAccess: noop,
 });
 
 export const useActions = () => useContext(ActionsContext);
@@ -60,6 +62,7 @@ export const useActions = () => useContext(ActionsContext);
 /** Hosts every bottom sheet in one place so any screen can open them. */
 export function AppActionsProvider({ children }: { children: React.ReactNode }) {
   const [sheet, setSheet] = useState<SheetState>({ kind: "none" });
+  const [accessTarget, setAccessTarget] = useState<AccessTarget | null>(null);
   const [storyUser, setStoryUser] = useState<string | null>(null);
   const [lastBill, setLastBill] = useState<Bill | null>(null);
   const close = useCallback(() => setSheet({ kind: "none" }), []);
@@ -85,6 +88,7 @@ export function AppActionsProvider({ children }: { children: React.ReactNode }) 
     viewStory: (userId) => setStoryUser(userId),
     editNotifications: () => setSheet({ kind: "notifications" }),
     editPermissions: () => setSheet({ kind: "permissions" }),
+    reviewAccess: (target) => { setAccessTarget(target); setSheet({ kind: "access" }); },
   }), []);
 
   return (
@@ -108,6 +112,7 @@ export function AppActionsProvider({ children }: { children: React.ReactNode }) 
       <StoryComposer open={sheet.kind === "story"} onClose={close} />
       <NotificationSheet open={sheet.kind === "notifications"} onClose={close} />
       <PermissionsSheet open={sheet.kind === "permissions"} onClose={close} />
+      <AccessSheet open={sheet.kind === "access"} onClose={close} target={accessTarget} />
       <StoryViewer userId={storyUser} onClose={() => setStoryUser(null)} />
       <SwitchHouseholdSheet open={sheet.kind === "switch"} onClose={close} />
     </ActionsContext.Provider>

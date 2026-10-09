@@ -26,11 +26,10 @@ export function HeroCard() {
       aria-label="Household expenses this month"
       className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[var(--hero-from)] to-[var(--hero-to)] p-6 text-white shadow-[var(--shadow-lg)]"
     >
-      <PhotoSlideshow opacity={0.42} />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-[var(--hero-from)]/55 via-transparent to-[var(--hero-to)]/45" />
-      <motion.div aria-hidden className="absolute -right-12 -top-16 h-52 w-52 rounded-full bg-white/10" animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} />
+      <PhotoSlideshow opacity={0.7} />
+      <motion.div aria-hidden className="absolute -right-12 -top-16 h-52 w-52 rounded-full bg-white/5" animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} />
       <motion.div aria-hidden className="absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-emerald-300/15" animate={{ scale: [1.05, 1, 1.05] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} />
-      <div className="relative">
+      <div className="relative [text-shadow:0_1px_8px_rgb(0_0_0/0.55)]">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/70">{household.name}</p>

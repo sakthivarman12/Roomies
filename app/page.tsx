@@ -6,16 +6,17 @@ import { useEffect } from "react";
 import { LogoMark } from "@/components/ui/Logo";
 import { TAGLINE } from "@/lib/constants";
 import { useSession } from "@/hooks/useApp";
+import { pendingRequestFor } from "@/lib/access";
 
 export default function Splash() {
   const router = useRouter();
-  const { ready, user, household } = useSession();
+  const { ready, db, user, household } = useSession();
 
   useEffect(() => {
     if (!ready) return;
-    const t = setTimeout(() => router.replace(user ? (household ? "/home" : "/household") : "/welcome"), 1500);
+    const t = setTimeout(() => router.replace(user ? (household ? "/home" : db && pendingRequestFor(db, user.id) ? "/pending" : "/household") : "/welcome"), 1500);
     return () => clearTimeout(t);
-  }, [ready, user, household, router]);
+  }, [ready, db, user, household, router]);
 
   return (
     <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[var(--hero-from)] to-[var(--hero-to)] text-white">

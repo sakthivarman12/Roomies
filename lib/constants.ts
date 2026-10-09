@@ -8,7 +8,7 @@ export const CATEGORIES: ExpenseCategory[] = [
   "Transport", "Cleaning", "Furniture", "Maintenance", "Other",
 ];
 
-export const PAYMENT_METHODS: PaymentMethod[] = ["UPI", "Cash", "Bank Transfer"];
+export const PAYMENT_METHODS: PaymentMethod[] = ["GPay", "PhonePe", "Paytm", "UPI", "Cash", "Bank Transfer"];
 
 /** Chart/category colour tokens (CSS variables defined in globals.css). */
 export const CATEGORY_COLOR: Record<ExpenseCategory, string> = {

@@ -1,5 +1,6 @@
 import { money } from "@/lib/format";
 import { assert, canManageHousehold, isMember } from "@/lib/permissions";
+import { fundBalance, restrictionsOf } from "@/lib/access";
 import { membersOf, pairBalance } from "@/lib/selectors";
 import { equalSplit } from "@/lib/split";
 import { nowIso, uid } from "@/lib/utils";
@@ -39,18 +40,24 @@ export const localPaymentService: PaymentService = {
     });
   },
 
-  payBill(billId, method) {
+  payBill(billId, method, fromFund) {
     return mutate(({ db, user, household }) => {
       const bill = db.bills.find((b) => b.id === billId && b.householdId === household.id);
       if (!bill) throw new ServiceError("Bill not found.");
       if (bill.paid) throw new ServiceError("This bill is already paid.");
-      const participants = bill.assignedTo.length ? bill.assignedTo : membersOf(db, household.id).map((m) => m.user.id);
+      const participants = bill.assignedTo.length ? bill.assignedTo : membersOf(db, household.id).filter((m) => m.member.kind !== "guest").map((m) => m.user.id);
+      if (fromFund) {
+        if (!restrictionsOf(db, user.id, household.id).seeFund) throw new ServiceError("You don't have access to the room fund.");
+        const bal = fundBalance(db, household.id);
+        if (bill.amount > bal + 0.001) throw new ServiceError(`The room fund only has ${money(Math.max(bal, 0))}.`);
+      }
       const expense: Expense = {
         id: uid(), householdId: household.id, title: `${bill.title} bill`, amount: bill.amount, category: bill.category,
         date: nowIso(), paidBy: user.id, splits: equalSplit(bill.amount, participants), splitMode: "equal",
-        notes: `Paid via ${method}`, createdBy: user.id, createdAt: nowIso(),
+        notes: fromFund ? "Paid from the room fund" : `Paid via ${method}`, paidFromFund: fromFund || undefined, createdBy: user.id, createdAt: nowIso(),
       };
       db.expenses.unshift(expense);
+      if (fromFund) db.fund.unshift({ id: uid(), householdId: household.id, userId: user.id, kind: "spend", amount: bill.amount, note: `${bill.title} bill`, expenseId: expense.id, createdAt: nowIso() });
       bill.paid = true;
       bill.paidBy = user.id;
       if (bill.recurring) {
@@ -60,7 +67,7 @@ export const localPaymentService: PaymentService = {
       }
       const receipt = saveReceipt(db, expense.id, {
         receiptNumber: receiptNumber(), date: expense.date, household: household.name.toUpperCase(),
-        description: `${bill.title} Bill`, amount: bill.amount, paidBy: user.name, status: "PAID", expenseId: expense.id,
+        description: `${bill.title} Bill`, amount: bill.amount, paidBy: fromFund ? "Room fund" : user.name, status: "PAID", expenseId: expense.id,
         splitDetails: expense.splits.map((s) => ({ name: db.users.find((u) => u.id === s.userId)?.name ?? "", amount: s.amount })),
       });
       notify(

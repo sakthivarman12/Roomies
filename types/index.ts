@@ -9,20 +9,21 @@ export type ExpenseCategory =
   | "Rent" | "Electricity" | "Water" | "Internet" | "Groceries" | "Food"
   | "Transport" | "Cleaning" | "Furniture" | "Maintenance" | "Other";
 
-export type PaymentMethod = "UPI" | "Cash" | "Bank Transfer";
+export type PaymentMethod = "UPI" | "GPay" | "PhonePe" | "Paytm" | "Cash" | "Bank Transfer";
 export type SplitMode = "equal" | "percentage" | "custom";
 export type ChoreStatus = "upcoming" | "in_progress" | "completed" | "overdue";
 export type Priority = "low" | "medium" | "high";
 export type Frequency = "once" | "daily" | "weekly" | "monthly";
 export type NotificationType =
   | "expense_added" | "expense_split" | "payment_received" | "payment_requested"
-  | "chore_assigned" | "chore_overdue" | "bill_reminder" | "announcement";
+  | "chore_assigned" | "chore_overdue" | "bill_reminder" | "announcement" | "join_request" | "fund";
 
 export interface User {
   id: ID;
   name: string;
   email: string;
   phone: string;
+  upiId?: string;
   passwordHash: string; // mock hash — Supabase Auth replaces this
   avatarColor: string;
   photo?: string;
@@ -35,6 +36,7 @@ export interface Household {
   address: string;
   monthlyRent: number;
   rentDueDay: number;
+  requireApproval?: boolean;
   lat?: number;
   lng?: number;
   rooms: number;
@@ -43,12 +45,58 @@ export interface Household {
   createdAt: ISODate;
 }
 
+/** What a member is allowed to see/do. The owner (or an admin) sets these when approving and can change them later. */
+export interface Restrictions {
+  seeFund: boolean;
+  seeAllExpenses: boolean;
+  addExpenses: boolean;
+  seeLocations: boolean;
+}
+
+export const FULL_ACCESS: Restrictions = { seeFund: true, seeAllExpenses: true, addExpenses: true, seeLocations: true };
+export const GUEST_ACCESS: Restrictions = { seeFund: false, seeAllExpenses: false, addExpenses: true, seeLocations: false };
+
+export type MemberKind = "resident" | "guest";
+
 export interface HouseholdMember {
   id: ID;
   householdId: ID;
   userId: ID;
   role: Role;
+  /** Residents live here; guests are friends who stay for a while and chip in. */
+  kind?: MemberKind;
+  restrictions?: Restrictions;
+  stayUntil?: ISODate;
   joinedAt: ISODate;
+}
+
+export interface JoinRequest {
+  id: ID;
+  householdId: ID;
+  userId: ID;
+  note?: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: ISODate;
+}
+
+export interface FundEntry {
+  id: ID;
+  householdId: ID;
+  userId: ID; // who contributed / who made the purchase
+  kind: "contribution" | "spend";
+  amount: number;
+  note?: string;
+  method?: PaymentMethod;
+  expenseId?: ID;
+  createdAt: ISODate;
+}
+
+export interface GalleryFolder {
+  id: ID;
+  householdId: ID;
+  name: string;
+  createdBy: ID;
+  createdAt: ISODate;
 }
 
 export interface ExpenseSplit {
@@ -68,6 +116,10 @@ export interface Expense {
   splitMode: SplitMode;
   notes?: string;
   receiptImage?: string;
+  /** Paid from the shared room fund instead of one person (then nobody owes anybody). */
+  paidFromFund?: boolean;
+  /** Where it was bought, e.g. "Zepto". */
+  source?: string;
   createdBy: ID;
   createdAt: ISODate;
 }
@@ -232,6 +284,7 @@ export interface GalleryPhoto {
   householdId: ID;
   kind?: "image" | "video";
   mediaId?: ID;
+  folderId?: ID;
   src: string; // image data URL in the prototype; empty for videos (see mediaId); Supabase Storage URL later
   caption?: string;
   addedBy: ID;
@@ -279,6 +332,9 @@ export interface Db {
   galleryPhotos: GalleryPhoto[];
   locations: MemberLocation[];
   stories: Story[];
+  joinRequests: JoinRequest[];
+  fund: FundEntry[];
+  galleryFolders: GalleryFolder[];
   receipts: Record<ID, Receipt>;
   session: { userId: ID | null; householdId: ID | null };
   prefs: Record<ID, Preferences>;

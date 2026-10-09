@@ -7,7 +7,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { AmountInput, Input } from "@/components/ui/Fields";
-import { SegmentedControl } from "@/components/ui/Tabs";
+import { Copy, Smartphone } from "lucide-react";
+import { isUpiApp, upiLink } from "@/lib/upi";
 import { useApp } from "@/hooks/useApp";
 import { PAYMENT_METHODS } from "@/lib/constants";
 import { money } from "@/lib/format";
@@ -39,6 +40,7 @@ export function SettleSheet({ open, onClose, toUserId }: { open: boolean; onClos
   if (!app) return null;
   const others = app.members.filter((m) => m.user.id !== app.user.id);
   const owed = owedTo(to);
+  const payee = app.members.find((m) => m.user.id === to)?.user;
 
   const submit = () => {
     setError("");
@@ -74,9 +76,28 @@ export function SettleSheet({ open, onClose, toUserId }: { open: boolean; onClos
         </div>
         <AmountInput value={amount} onChange={setAmount} error={Number(amount) > owed + 0.001 && owed >= 0 ? `You only owe ${money(owed)}` : undefined} />
         <div>
-          <p className="mb-2 px-1 text-[13px] font-semibold text-muted">Payment method</p>
-          <SegmentedControl<PaymentMethod> label="Payment method" value={method} onChange={setMethod} options={PAYMENT_METHODS.map((m) => ({ value: m, label: m }))} />
-          <p className="mt-2 px-1 text-xs text-muted">Prototype: payments are recorded, not processed. Razorpay/UPI can plug in here later.</p>
+          <p className="mb-2 px-1 text-[13px] font-semibold text-muted">Pay with</p>
+          <div role="radiogroup" aria-label="Payment method" className="grid grid-cols-3 gap-2">
+            {PAYMENT_METHODS.map((m) => (
+              <button key={m} type="button" role="radio" aria-checked={method === m} onClick={() => setMethod(m)}
+                className={cn("min-h-[48px] rounded-2xl border px-2 text-[13px] font-bold transition-colors", method === m ? "border-primary bg-primary-soft text-primary" : "border-line bg-surface")}>{m}</button>
+            ))}
+          </div>
+          {isUpiApp(method) && payee && (
+            <div className="mt-3 space-y-2 rounded-2xl bg-surface2 p-3.5">
+              {payee.upiId ? (
+                <>
+                  <p className="text-xs text-muted">Pay to <b className="text-ink">{payee.upiId}</b></p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <a href={upiLink(method, { upiId: payee.upiId, name: payee.name, amount: Number(amount) || 0, note }) ?? undefined} onClick={(e) => { if (!(Number(amount) > 0)) e.preventDefault(); }}
+                      className="inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl bg-primary text-sm font-bold text-primary-ink"><Smartphone className="h-4 w-4" />Open {method === "UPI" ? "UPI app" : method}</a>
+                    <Button type="button" variant="secondary" onClick={() => { void navigator.clipboard?.writeText(payee.upiId!); }}><Copy className="h-4 w-4" />Copy ID</Button>
+                  </div>
+                  <p className="text-[11px] text-muted">Complete the payment in the app, come back, then tap “Mark as paid”. Roomies can&apos;t confirm the payment itself.</p>
+                </>
+              ) : <p className="text-xs text-warning">{payee.name} hasn&apos;t added a UPI ID yet. Ask them to add it in Edit profile, or pay by cash.</p>}
+            </div>
+          )}
         </div>
         <Input label="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. September rent share" />
         {error && <p role="alert" className="rounded-2xl bg-danger-soft px-4 py-3 text-sm font-semibold text-danger">{error}</p>}

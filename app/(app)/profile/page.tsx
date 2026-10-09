@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ChartNoAxesColumn, ChevronRight, Receipt, Repeat2, ScrollText, ShieldCheck as ShieldIcon, Globe, IndianRupee, KeyRound, LogOut, Palette, RotateCcw, ShieldCheck, UserRound, DoorOpen, Users } from "lucide-react";
+import { PiggyBank, ShoppingBag, UserPlus, Bell, ChartNoAxesColumn, ChevronRight, Receipt, Repeat2, ScrollText, ShieldCheck as ShieldIcon, Globe, IndianRupee, KeyRound, LogOut, Palette, RotateCcw, ShieldCheck, UserRound, DoorOpen, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -58,6 +58,7 @@ export default function ProfilePage() {
     }
   };
   const { user, prefs, household, theme } = app;
+  const pending = app.db.joinRequests.filter((r) => r.householdId === household.id && r.status === "pending");
 
   return (
     <div>
@@ -71,13 +72,6 @@ export default function ProfilePage() {
       {tab === "gallery" && <div className="px-4 pb-6 pt-3"><GalleryPanel /></div>}
       {tab === "settings" && (
       <div className="space-y-5 px-4 pt-2 pb-6">
-        <Card padded={false} className="divide-y divide-line">
-          <p className="px-4 pt-3.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Money</p>
-          <Row icon={<Receipt className="h-5 w-5" />} title="Expenses" hint="All shared expenses & splits" onClick={() => router.push("/expenses")} />
-          <Row icon={<Repeat2 className="h-5 w-5" />} title="Bills" hint="Upcoming & recurring" onClick={() => router.push("/bills")} />
-          <Row icon={<ScrollText className="h-5 w-5" />} title="Transactions" hint="History & settlements" onClick={() => router.push("/transactions")} />
-          <Row icon={<ChartNoAxesColumn className="h-5 w-5" />} title="Analytics" hint="Spending trends & balances" onClick={() => router.push("/analytics")} />
-        </Card>
         <Card className="flex items-center gap-4">
           <Avatar user={user} size="xl" />
           <div className="min-w-0 flex-1">
@@ -88,6 +82,32 @@ export default function ProfilePage() {
           </div>
         </Card>
         <Button variant="secondary" block onClick={actions.editProfile}><UserRound className="h-4 w-4" />Edit profile</Button>
+
+        {app.canManage && pending.length > 0 && (
+          <Card padded={false} className="divide-y divide-line border-primary/40">
+            <p className="flex items-center gap-2 px-4 pt-3.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary"><UserPlus className="h-4 w-4" />New roommates waiting<span className="rounded-full bg-primary px-2 py-0.5 text-[10px] text-primary-ink">{pending.length}</span></p>
+            {pending.map((r) => {
+              const u = app.db.users.find((x) => x.id === r.userId);
+              if (!u) return null;
+              return (
+                <div key={r.id} className="flex items-center gap-3 px-4 py-3">
+                  <Avatar user={u} size="md" />
+                  <div className="min-w-0 flex-1"><p className="truncate text-sm font-extrabold">{u.name}</p><p className="truncate text-xs text-muted">{r.note ?? u.email}</p></div>
+                  <Button size="sm" onClick={() => actions.reviewAccess({ requestId: r.id, userId: u.id })}>Review</Button>
+                </div>
+              );
+            })}
+          </Card>
+        )}
+        <Card padded={false} className="divide-y divide-line">
+          <p className="px-4 pt-3.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">Money</p>
+          <Row icon={<Receipt className="h-5 w-5" />} title="Expenses" hint="All shared expenses & splits" onClick={() => router.push("/expenses")} />
+          <Row icon={<Repeat2 className="h-5 w-5" />} title="Bills" hint="Upcoming & recurring" onClick={() => router.push("/bills")} />
+          <Row icon={<ShoppingBag className="h-5 w-5" />} title="Shopping" hint="Groceries & food from quick-delivery apps" onClick={() => router.push("/shop")} />
+          <Row icon={<PiggyBank className="h-5 w-5" />} title="Room fund" hint="Common pot everyone chips into" onClick={() => router.push("/fund")} />
+          <Row icon={<ScrollText className="h-5 w-5" />} title="Transactions" hint="History & settlements" onClick={() => router.push("/transactions")} />
+          <Row icon={<ChartNoAxesColumn className="h-5 w-5" />} title="Analytics" hint="Spending trends & balances" onClick={() => router.push("/analytics")} />
+        </Card>
 
         {app.canManage && (
           <Card padded={false} className="divide-y divide-line">

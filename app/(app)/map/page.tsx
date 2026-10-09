@@ -17,6 +17,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { useToast } from "@/components/ui/Toast";
 import { useApp } from "@/hooks/useApp";
 import { relativeTime } from "@/lib/format";
+import { restrictionsOf } from "@/lib/access";
 import { requestPermission } from "@/lib/notify";
 import { activeStories } from "@/lib/selectors";
 import { geoService } from "@/lib/services";
@@ -34,8 +35,9 @@ export default function MapPage() {
   const stories = useMemo(() => (app ? activeStories(app.db, app.household.id) : []), [app]);
   const people: MapPerson[] = useMemo(() => {
     if (!app) return [];
+    const seeOthers = restrictionsOf(app.db, app.user.id, app.household.id).seeLocations;
     return app.db.locations
-      .filter((l) => l.householdId === app.household.id && l.sharing)
+      .filter((l) => l.householdId === app.household.id && l.sharing && (seeOthers || l.userId === app.user.id))
       .flatMap((l) => {
         const u = app.userById(l.userId);
         if (!u) return [];

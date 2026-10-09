@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useActions } from "@/components/AppActions";
+import { restrictionsOf } from "@/lib/access";
 import { IconButton } from "@/components/ui/Button";
 import { useApp } from "@/hooks/useApp";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ export function AddMenu() {
   }, [open]);
 
   if (!app) return null;
+  const canAdd = restrictionsOf(app.db, app.user.id, app.household.id).addExpenses;
 
   const items: Item[] = [
     { label: "Expense", hint: "Split a cost with roommates", icon: Receipt, run: () => a.addExpense(), tone: "bg-info-soft text-info" },
@@ -44,7 +46,7 @@ export function AddMenu() {
     { label: "Announcement", hint: "Notify the whole house", icon: Megaphone, run: a.addAnnouncement, managerOnly: true, tone: "bg-violet-soft text-violet" },
     { label: "Document", hint: "Agreements, manuals", icon: FilePlus2, run: a.addDocument, managerOnly: true, tone: "bg-surface2 text-muted" },
     { label: "Roommate", hint: "Add someone to the house", icon: UserPlus, run: a.addMember, managerOnly: true, tone: "bg-success-soft text-success" },
-  ].filter((i) => !i.managerOnly || app.canManage);
+  ].filter((i) => (!i.managerOnly || app.canManage) && (canAdd || !["Expense", "Settle up"].includes(i.label)));
 
   return (
     <div ref={box} className="relative">

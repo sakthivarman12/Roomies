@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/States";
 import { Tabs } from "@/components/ui/Tabs";
 import { useApp } from "@/hooks/useApp";
+import { visibleExpenses } from "@/lib/access";
 import { isSameMonth } from "@/lib/format";
 import { transactionsFor } from "@/lib/selectors";
 
@@ -22,7 +23,11 @@ export default function TransactionsPage() {
   const [person, setPerson] = useState("all");
   const [when, setWhen] = useState("all");
 
-  const all = useMemo(() => (app ? transactionsFor(app.db, app.household.id, app.user.id) : []), [app]);
+  const all = useMemo(() => {
+    if (!app) return [];
+    const visible = new Set(visibleExpenses(app.db, app.household.id, app.user.id).map((e) => e.id));
+    return transactionsFor(app.db, app.household.id, app.user.id).filter((t) => t.kind === "payment" || visible.has(t.refId));
+  }, [app]);
   const rows = useMemo(() => {
     if (!app) return [];
     return all.filter((t) => {

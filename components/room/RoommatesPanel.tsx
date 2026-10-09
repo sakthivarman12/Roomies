@@ -4,6 +4,7 @@ import { Crown, MoreVertical, ShieldCheck, UserMinus, UserPlus } from "lucide-re
 import Link from "next/link";
 import { useState } from "react";
 import { useActions } from "@/components/AppActions";
+import { ContactButtons } from "@/components/room/ContactButtons";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -47,12 +48,14 @@ export function RoommatesPanel() {
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 truncate text-[15px] font-extrabold">{user.name}{user.id === app.user.id && <span className="text-xs font-semibold text-muted">(you)</span>}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                  {member.kind === "guest" && <Badge tone="warning">Friend</Badge>}
                   <Badge tone={ROLE_TONE[member.role]} icon={member.role === "OWNER" ? <Crown className="h-3 w-3" /> : member.role === "ADMIN" ? <ShieldCheck className="h-3 w-3" /> : undefined}>{member.role}</Badge>
                   <span className={`tnum text-xs font-bold ${Math.abs(net) < 0.01 ? "text-success" : net > 0 ? "text-success" : "text-danger"}`}>{Math.abs(net) < 0.01 ? "Settled" : net > 0 ? `Owed ${money(net)}` : `Owes ${money(-net)}`}</span>
                 </div>
                 <p className="mt-1 text-[11px] text-muted">{chores} chore{chores === 1 ? "" : "s"} · Last active {lastActivity(user.id)}</p>
               </div>
             </Link>
+            {user.id !== app.user.id && <ContactButtons name={user.name} phone={user.phone} size="sm" className="shrink-0" />}
             {app.canManage && user.id !== app.user.id && member.role !== "OWNER" && (
               <button onClick={() => setManage(user.id)} aria-label={`Manage ${user.name}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface2"><MoreVertical className="h-5 w-5" /></button>
             )}
@@ -74,6 +77,7 @@ export function RoommatesPanel() {
                 <Button variant="secondary" block onClick={() => { run(() => transferOwnership(app.household.id, target.user.id), `${target.user.name} is the new owner`); setManage(null); }}><Crown className="h-4 w-4" />Transfer ownership</Button>
               </>
             )}
+            <Button variant="secondary" block onClick={() => { actions.reviewAccess({ userId: target.user.id }); setManage(null); }}><ShieldCheck className="h-4 w-4" />Access &amp; restrictions</Button>
             <Button variant="danger" block onClick={() => { run(() => roomService.removeMember(app.household.id, target.user.id), `${target.user.name} removed`); setManage(null); }}><UserMinus className="h-4 w-4" />Remove from household</Button>
           </div>
         )}

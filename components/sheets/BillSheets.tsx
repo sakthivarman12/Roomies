@@ -7,7 +7,10 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { PersonChips } from "@/components/ui/Chips";
 import { AmountInput, DatePicker, Input, Select } from "@/components/ui/Fields";
+import { PiggyBank } from "lucide-react";
 import { SegmentedControl } from "@/components/ui/Tabs";
+import { Toggle } from "@/components/ui/Toggle";
+import { fundBalance, restrictionsOf } from "@/lib/access";
 import { useToast } from "@/components/ui/Toast";
 import { useApp } from "@/hooks/useApp";
 import { CATEGORIES, PAYMENT_METHODS } from "@/lib/constants";
@@ -65,14 +68,16 @@ export function BillSheet({ open, onClose }: { open: boolean; onClose: () => voi
 
 export function PayBillSheet({ open, onClose, bill }: { open: boolean; onClose: () => void; bill: Bill | null }) {
   const receipts = useReceiptOverlay();
+  const app = useApp();
   const [method, setMethod] = useState<PaymentMethod>("UPI");
+  const [fromFund, setFromFund] = useState(false);
   const [error, setError] = useState("");
-  useOnOpen(open, () => { setMethod("UPI"); setError(""); });
+  useOnOpen(open, () => { setMethod("UPI"); setFromFund(false); setError(""); });
   if (!bill) return null;
 
   const pay = () => {
     try {
-      const { receipt } = paymentService.payBill(bill.id, method);
+      const { receipt } = paymentService.payBill(bill.id, method, fromFund);
       onClose();
       receipts.show({ receipt, heading: "PAYMENT SUCCESSFUL" });
     } catch (err) { setError(err instanceof Error ? err.message : "Couldn't pay bill."); }
@@ -86,7 +91,13 @@ export function PayBillSheet({ open, onClose, bill }: { open: boolean; onClose: 
           <p className="text-sm text-muted">You&apos;ll pay the full bill and roommates owe you their share.</p>
           <p className="tnum mt-2 text-4xl font-black">{money(bill.amount)}</p>
         </div>
-        <SegmentedControl<PaymentMethod> label="Payment method" value={method} onChange={setMethod} options={PAYMENT_METHODS.map((m) => ({ value: m, label: m }))} />
+        {app && restrictionsOf(app.db, app.user.id, app.household.id).seeFund && (
+          <div className="flex items-center gap-3 rounded-2xl bg-surface2 p-3.5">
+            <PiggyBank className="h-5 w-5 text-success" /><div className="flex-1"><p className="text-sm font-bold">Pay from room fund</p><p className="text-xs text-muted">{money(fundBalance(app.db, app.household.id))} available</p></div>
+            <Toggle label="Pay from room fund" checked={fromFund} onChange={setFromFund} />
+          </div>
+        )}
+        {!fromFund && <Select label="Paid with" value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)} options={PAYMENT_METHODS.map((m) => ({ value: m, label: m }))} />}
         {error && <p role="alert" className="rounded-2xl bg-danger-soft px-4 py-3 text-sm font-semibold text-danger">{error}</p>}
       </div>
     </BottomSheet>

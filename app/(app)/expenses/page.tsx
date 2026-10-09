@@ -13,7 +13,8 @@ import { Tabs } from "@/components/ui/Tabs";
 import { useApp } from "@/hooks/useApp";
 import { CATEGORIES } from "@/lib/constants";
 import { isSameMonth, money } from "@/lib/format";
-import { householdExpenses, monthTotal, pairBalance } from "@/lib/selectors";
+import { visibleExpenses } from "@/lib/access";
+import { monthTotal, pairBalance } from "@/lib/selectors";
 import { sum } from "@/lib/utils";
 
 type Status = "all" | "paid" | "owe" | "owed" | "settled";
@@ -28,7 +29,7 @@ export default function ExpensesPage() {
   const [person, setPerson] = useState("all");
   const [when, setWhen] = useState<When>("all");
 
-  const all = useMemo(() => (app ? householdExpenses(app.db, app.household.id) : []), [app]);
+  const all = useMemo(() => (app ? visibleExpenses(app.db, app.household.id, app.user.id) : []), [app]);
 
   const filtered = useMemo(() => {
     if (!app) return [];

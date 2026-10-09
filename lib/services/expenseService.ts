@@ -1,5 +1,6 @@
 import { canEditExpense, assert } from "@/lib/permissions";
 import { membersOf } from "@/lib/selectors";
+import { fundBalance, restrictionsOf } from "@/lib/access";
 import { validateSplitTotal } from "@/lib/split";
 import { nowIso, uid } from "@/lib/utils";
 import { money } from "@/lib/format";
@@ -21,7 +22,7 @@ function buildReceipt(db: Db, expense: Expense, householdName: string): Receipt 
   const nameOf = (id: string) => db.users.find((u) => u.id === id)?.name ?? "Unknown";
   return {
     receiptNumber: receiptNumber(), date: nowIso(), household: householdName.toUpperCase(), description: expense.title,
-    amount: expense.amount, paidBy: nameOf(expense.paidBy), status: "ADDED", expenseId: expense.id,
+    amount: expense.amount, paidBy: expense.paidFromFund ? "Room fund" : nameOf(expense.paidBy), status: "ADDED", expenseId: expense.id,
     splitDetails: expense.splits.map((s) => ({ name: nameOf(s.userId), amount: s.amount })),
   };
 }
@@ -30,12 +31,22 @@ export const localExpenseService: ExpenseService = {
   create(input) {
     return mutate(({ db, user, household }) => {
       validate(db, household.id, input);
+      const access = restrictionsOf(db, user.id, household.id);
+      if (!access.addExpenses) throw new ServiceError("The owner has turned off adding expenses for you.");
+      if (input.paidFromFund) {
+        if (!access.seeFund) throw new ServiceError("You don't have access to the room fund.");
+        const bal = fundBalance(db, household.id);
+        if (input.amount > bal + 0.001) throw new ServiceError(`The room fund only has ${money(Math.max(bal, 0))}. Top it up or pay another way.`);
+      }
       const expense: Expense = {
         id: uid(), householdId: household.id, title: input.title.trim(), amount: input.amount, category: input.category,
         date: input.date, paidBy: input.paidBy, splits: input.splits, splitMode: input.splitMode, notes: input.notes?.trim() || undefined,
-        receiptImage: input.receiptImage, createdBy: user.id, createdAt: nowIso(),
+        receiptImage: input.receiptImage, paidFromFund: input.paidFromFund || undefined, source: input.source, createdBy: user.id, createdAt: nowIso(),
       };
       db.expenses.unshift(expense);
+      if (expense.paidFromFund) {
+        db.fund.unshift({ id: uid(), householdId: household.id, userId: user.id, kind: "spend", amount: expense.amount, note: expense.title, expenseId: expense.id, createdAt: nowIso() });
+      }
       const receipt = saveReceipt(db, expense.id, buildReceipt(db, expense, household.name));
       const involved = expense.splits.map((s) => s.userId).filter((id) => id !== user.id);
       notify(db, household.id, involved, "expense_split", "New split expense", `${user.name} added ${expense.title} — ${money(expense.amount)}`);
@@ -54,6 +65,7 @@ export const localExpenseService: ExpenseService = {
         title: input.title.trim(), amount: input.amount, category: input.category, date: input.date, paidBy: input.paidBy,
         splits: input.splits, splitMode: input.splitMode, notes: input.notes?.trim() || undefined, receiptImage: input.receiptImage,
       });
+      db.fund.filter((f) => f.expenseId === expense.id).forEach((f) => { f.amount = expense.amount; f.note = expense.title; });
       saveReceipt(db, expense.id, { ...buildReceipt(db, expense, household.name), receiptNumber: db.receipts[expense.id]?.receiptNumber ?? receiptNumber() });
       return expense;
     });
@@ -65,6 +77,7 @@ export const localExpenseService: ExpenseService = {
       if (!expense) throw new ServiceError("Expense not found.");
       assert(canEditExpense(db, user, expense), "You can only delete expenses you created or paid for.");
       db.expenses = db.expenses.filter((e) => e.id !== id);
+      db.fund = db.fund.filter((f) => f.expenseId !== id);
       delete db.receipts[id];
     });
   },
