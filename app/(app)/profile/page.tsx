@@ -112,7 +112,7 @@ export default function ProfilePage() {
 
         {app.canManage && (
           <Card padded={false} className="divide-y divide-line">
-            <p className="px-4 pt-3.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">{app.isOwner ? "Owner" : "Admin"} controls</p>
+            <p className="px-4 pt-3.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted">{app.isOwner ? "RM" : "Admin"} controls</p>
             <Row icon={<Users className="h-5 w-5" />} title="Manage members" hint="Add, remove, change roles" onClick={() => router.push("/house")} />
             <Row icon={<IndianRupee className="h-5 w-5" />} title="Edit household" hint="Rent, due date, address" onClick={actions.editHousehold} />
             <Row icon={<KeyRound className="h-5 w-5" />} title="Invite code" hint={household.inviteCode} onClick={() => run(() => roomService.regenerateInvite(household.id), "New invite code generated")} />
