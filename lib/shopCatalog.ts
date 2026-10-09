@@ -34,6 +34,13 @@ export interface CatalogItem {
   price: number;
   group: "Groceries" | "Food";
   emoji: string;
+  /** Set for live results (e.g. Instamart via Mindcase): price is already the store price. */
+  live?: boolean;
+  mrp?: number;
+  image?: string;
+  inStock?: boolean;
+  brand?: string;
+  url?: string;
 }
 
 export const CATALOG: CatalogItem[] = [
@@ -60,7 +67,7 @@ export const CATALOG: CatalogItem[] = [
 ];
 
 export function priceAt(item: CatalogItem, provider: Provider): number {
-  return Math.round(item.price * provider.factor);
+  return item.live ? item.price : Math.round(item.price * provider.factor);
 }
 
 export function categoryFor(group: CatalogItem["group"]): ExpenseCategory {
