@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { LogoMark } from "@/components/ui/Logo";
 import { TAGLINE } from "@/lib/constants";
 import { useSession } from "@/hooks/useApp";
@@ -12,11 +12,21 @@ export default function Splash() {
   const router = useRouter();
   const { ready, db, user, household } = useSession();
 
+  // Read the latest destination through a ref so re-renders can't keep resetting the timers.
+  const target = useRef("/welcome");
+  target.current = user ? (household ? "/home" : db && pendingRequestFor(db, user.id) ? "/pending" : "/household") : "/welcome";
+
   useEffect(() => {
     if (!ready) return;
-    const t = setTimeout(() => router.replace(user ? (household ? "/home" : db && pendingRequestFor(db, user.id) ? "/pending" : "/household") : "/welcome"), 1500);
+    const t = setTimeout(() => router.replace(target.current), 1500);
     return () => clearTimeout(t);
-  }, [ready, db, user, household, router]);
+  }, [ready, router]);
+
+  // Safety net: if the store never reports ready, leave the splash anyway.
+  useEffect(() => {
+    const t = setTimeout(() => router.replace(target.current), 4000);
+    return () => clearTimeout(t);
+  }, [router]);
 
   return (
     <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[var(--hero-from)] to-[var(--hero-to)] text-white">
