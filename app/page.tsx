@@ -7,24 +7,36 @@ import { LogoMark } from "@/components/ui/Logo";
 import { TAGLINE } from "@/lib/constants";
 import { useSession } from "@/hooks/useApp";
 import { pendingRequestFor } from "@/lib/access";
+import { whenSynced } from "@/lib/supabase/sync";
 
 export default function Splash() {
   const router = useRouter();
   const { ready, db, user, household } = useSession();
 
   // Read the latest destination through a ref so re-renders can't keep resetting the timers.
-  const target = useRef("/welcome");
-  target.current = user ? (household ? "/home" : db && pendingRequestFor(db, user.id) ? "/pending" : "/household") : "/welcome";
+  const destination = user ? (household ? "/home" : db && pendingRequestFor(db, user.id) ? "/pending" : "/household") : "/welcome";
+  const target = useRef(destination);
+  useEffect(() => {
+    target.current = destination;
+  }, [destination]);
 
+  // Wait for the Supabase load so a signed-in user isn't sent to /welcome before their data arrives.
   useEffect(() => {
     if (!ready) return;
-    const t = setTimeout(() => router.replace(target.current), 1500);
-    return () => clearTimeout(t);
+    let t: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+    whenSynced().then(() => {
+      if (!cancelled) t = setTimeout(() => router.replace(target.current), 1500);
+    });
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, [ready, router]);
 
   // Safety net: if the store never reports ready, leave the splash anyway.
   useEffect(() => {
-    const t = setTimeout(() => router.replace(target.current), 4000);
+    const t = setTimeout(() => router.replace(target.current), 12000);
     return () => clearTimeout(t);
   }, [router]);
 

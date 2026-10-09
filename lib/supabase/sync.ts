@@ -164,6 +164,11 @@ export function startSync(local: Db, onRemote: (db: Db) => void): void {
   });
 }
 
+/** Resolves once the queued startup load (and any writes before it) has finished. */
+export function whenSynced(): Promise<void> {
+  return queue;
+}
+
 /** Queues a sync of the current Db. Safe to call on every change. */
 export function pushDb(db: Db): void {
   if (!getSupabaseClient()) return;
