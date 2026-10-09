@@ -21,6 +21,6 @@ let client: SupabaseClient | null = null;
 export function getSupabaseClient(): SupabaseClient | null {
   const config = getSupabaseConfig();
   if (!config) return null;
-  client ??= createClient(config.url, config.anonKey, { auth: { persistSession: false } });
+  client ??= createClient(config.url, config.anonKey, { auth: { persistSession: true } });
   return client;
 }

@@ -1,8 +1,8 @@
-import { AVATAR_COLORS, DEMO_PASSWORD } from "@/lib/constants";
+import { AVATAR_COLORS } from "@/lib/constants";
 import { assert, canChangeRoles, canManageHousehold, canManageMembers, roleOf } from "@/lib/permissions";
 import { currentHousehold, myHouseholds } from "@/lib/selectors";
 import { dbStore } from "@/store/db";
-import { inviteCode, mockHash, nowIso, uid } from "@/lib/utils";
+import { inviteCode, nowIso, uid } from "@/lib/utils";
 import { FULL_ACCESS, type Household, type JoinRequest, type MemberKind } from "@/types";
 import { mutate, mutateUser, notify, ServiceError } from "./context";
 import type { HouseholdInput, RoomService } from "./types";
@@ -142,9 +142,8 @@ export const localRoomService: RoomService = {
       let target = db.users.find((u) => u.email === mail);
       if (!target) {
         if (name.trim().length < 2) throw new ServiceError("Enter the roommate's name.");
-        // Prototype only: invited users get the demo password until real invites exist.
         target = {
-          id: uid(), name: name.trim(), email: mail, phone: "", passwordHash: mockHash(DEMO_PASSWORD),
+          id: uid(), name: name.trim(), email: mail, phone: "", passwordHash: "",
           avatarColor: AVATAR_COLORS[db.users.length % AVATAR_COLORS.length], createdAt: nowIso(),
         };
         db.users.push(target);

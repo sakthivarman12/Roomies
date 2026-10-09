@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Fields";
 import { useToast } from "@/components/ui/Toast";
 import { authService } from "@/lib/services";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { remoteSignUp } from "@/lib/supabase/auth";
 import { useGuard } from "@/hooks/useGuard";
 
 export default function SignupPage() {
@@ -21,10 +23,20 @@ export default function SignupPage() {
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setBusy(true);
+    if (isSupabaseConfigured()) {
+      try {
+        await remoteSignUp(form);
+        window.location.assign("/");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Couldn't create your account.");
+        setBusy(false);
+      }
+      return;
+    }
     setTimeout(() => {
       try {
         const user = authService.signup(form);

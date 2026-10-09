@@ -51,19 +51,6 @@ npm run build && npm start   # production build
 npm run lint
 ```
 
-## Demo accounts
-
-Shown on the login screen in development only. Password for all: `roomies123`
-
-| Name   | Email                 | Role   |
-| ------ | --------------------- | ------ |
-| Sakthi | sakthi@roomies.local  | OWNER  |
-| Devi   | devi@roomies.local    | MEMBER |
-| Arun   | arun@roomies.local    | MEMBER |
-| Rahul  | rahul@roomies.local   | MEMBER |
-
-Household: **Green Villa** · invite code `RM-7X92KP`. *Profile → Reset demo data* restores the seed.
-
 ## Folder structure
 
 ```

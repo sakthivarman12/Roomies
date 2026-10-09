@@ -1,7 +1,8 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { DB_VERSION } from "@/lib/constants";
+import type { Session, SupabaseClient, User as AuthUser } from "@supabase/supabase-js";
+import { AVATAR_COLORS, DB_VERSION } from "@/lib/constants";
 import { getSupabaseClient } from "@/lib/supabase/client";
-import type { Db } from "@/types";
+import { nowIso } from "@/lib/utils";
+import type { Db, User } from "@/types";
 
 /**
  * Mirrors the in-memory Db into the `roomies_state` table: one row per record (collection + id, JSON payload).
@@ -77,9 +78,16 @@ async function fetchRows(client: SupabaseClient): Promise<Row[]> {
   return rows;
 }
 
+/** Only a signed-in user may read or write rows; RLS rejects everyone else. */
+async function signedInSession(client: SupabaseClient): Promise<Session | null> {
+  const { data } = await client.auth.getSession();
+  return data.session;
+}
+
 async function pushNow(db: Db): Promise<void> {
   const client = getSupabaseClient();
   if (!client || !syncEnabled) return;
+  if (!(await signedInSession(client))) return;
   const next = snapshot(db);
   const upserts: Row[] = [];
   next.forEach((row, key) => {
@@ -113,23 +121,43 @@ function enqueue(task: () => Promise<void>): void {
   queue = queue.then(task).catch((err) => console.warn("Supabase sync failed; will retry on the next change.", err));
 }
 
+/** Makes sure the signed-in Supabase user has a profile row and that the session points at it. */
+function attachAccount(db: Db, account: AuthUser): boolean {
+  const meta = (account.user_metadata ?? {}) as { name?: unknown; phone?: unknown };
+  const isNew = !db.users.some((u) => u.id === account.id);
+  if (isNew) {
+    const profile: User = {
+      id: account.id,
+      name: typeof meta.name === "string" && meta.name ? meta.name : (account.email ?? "Roommate"),
+      email: account.email ?? "",
+      phone: typeof meta.phone === "string" ? meta.phone : "",
+      passwordHash: "",
+      avatarColor: AVATAR_COLORS[db.users.length % AVATAR_COLORS.length],
+      createdAt: nowIso(),
+    } as User;
+    db.users.push(profile);
+  }
+  const membership = db.members.find((m) => m.userId === account.id);
+  db.session = { userId: account.id, householdId: membership?.householdId ?? null };
+  return isNew;
+}
+
 /**
- * Loads the household data from Supabase. If the table is empty, uploads the local data instead.
+ * Loads the signed-in user's household data from Supabase. Signed-out devices keep local data untouched,
+ * and nothing is uploaded until someone is signed in, so local-only data can't leak into the shared table.
  * Writes queued before this finishes wait for it, so local state can't overwrite remote rows.
  */
 export function startSync(local: Db, onRemote: (db: Db) => void): void {
   const client = getSupabaseClient();
   if (!client) return;
   queue = queue.then(async () => {
-    const rows = await fetchRows(client);
-    if (rows.length) {
-      const remote = fromRows(rows, local.session);
-      baseline = new Map([...snapshot(remote)].map(([key, row]) => [key, JSON.stringify(row.data)]));
-      onRemote(remote);
-    } else {
-      baseline = new Map();
-      await pushNow(local);
-    }
+    const session = await signedInSession(client);
+    if (!session) return;
+    const remote = fromRows(await fetchRows(client), local.session);
+    baseline = new Map([...snapshot(remote)].map(([key, row]) => [key, JSON.stringify(row.data)]));
+    const isNewProfile = attachAccount(remote, session.user);
+    onRemote(remote);
+    if (isNewProfile) pushDb(remote);
   }).catch((err) => {
     syncEnabled = false;
     console.warn("Supabase load failed; using local data without syncing.", err);

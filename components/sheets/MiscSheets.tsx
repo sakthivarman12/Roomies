@@ -69,7 +69,6 @@ export function MemberSheet({ open, onClose }: SheetProps) {
         <SegmentedControl<MemberKind> label="Is this a roommate or a friend?" value={kind} onChange={setKind} options={[{ value: "resident", label: "Roommate" }, { value: "guest", label: "Friend (visiting)" }]} />
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Priya" />
         <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="priya@mail.com" />
-        <p className="px-1 text-xs text-muted">Prototype: new accounts start with the password <b>roomies123</b>.</p>
         <ErrorLine error={error} />
       </div>
     </BottomSheet>

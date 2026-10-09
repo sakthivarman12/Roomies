@@ -42,5 +42,4 @@ export const GROUP_COLOR: Record<string, string> = {
 };
 
 export const AVATAR_COLORS = ["#4f46e5", "#0d9488", "#db2777", "#ea580c", "#7c3aed", "#0284c7"];
-export const DEMO_PASSWORD = "roomies123";
 export const TAGLINE = "Live together. Split smarter.";

@@ -54,7 +54,6 @@ export default function RoommatesStep() {
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="devi@mail.com" />
         </div>
         <Button type="submit" variant="soft" block><UserPlus className="h-4 w-4" />Add roommate</Button>
-        <p className="px-1 text-xs text-muted">Prototype note: new roommates start with the password <b>roomies123</b>.</p>
       </form>
 
       <section className="mt-6" aria-label="Current members">

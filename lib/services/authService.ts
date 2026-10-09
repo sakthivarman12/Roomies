@@ -1,5 +1,6 @@
 import { AVATAR_COLORS } from "@/lib/constants";
 import { currentUser } from "@/lib/selectors";
+import { remoteSignOut } from "@/lib/supabase/auth";
 import { mockHash, nowIso, uid } from "@/lib/utils";
 import { dbStore } from "@/store/db";
 import type { Preferences } from "@/types";
@@ -45,6 +46,7 @@ export const localAuthService: AuthService = {
     dbStore.update((db) => {
       db.session = { userId: null, householdId: null };
     });
+    void remoteSignOut();
   },
 
   getCurrentUser() {
