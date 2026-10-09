@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import type { ExpenseCategory } from "@/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { QrScanner } from "@/components/room/QrScanner";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Fields";
 import { SegmentedControl } from "@/components/ui/Tabs";
@@ -53,11 +54,18 @@ export default function HouseholdPage() {
     }
   };
 
-  const join = (e: React.FormEvent) => {
-    e.preventDefault();
+  const [scanning, setScanning] = useState(false);
+
+  // Opened from a scanned QR (/household?code=...): pre-fill and jump to the join tab.
+  useEffect(() => {
+    const fromLink = new URLSearchParams(window.location.search).get("code");
+    if (fromLink) { setMode("join"); setCode(fromLink.toUpperCase()); }
+  }, []);
+
+  const submitCode = (raw: string) => {
     setError("");
     try {
-      const { household: h, status } = roomService.joinByCode(code);
+      const { household: h, status } = roomService.joinByCode(raw);
       if (status === "pending") {
         toast.show(`Request sent to ${h.name}`, "info");
         router.replace("/pending");
@@ -68,6 +76,20 @@ export default function HouseholdPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't join household.");
     }
+  };
+
+  const join = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitCode(code);
+  };
+
+  /** A scanned QR holds either a join link or the bare code. */
+  const onScan = (text: string) => {
+    setScanning(false);
+    let value = text.trim();
+    try { value = new URL(value).searchParams.get("code") ?? value; } catch { /* not a URL, use as code */ }
+    setCode(value.toUpperCase());
+    submitCode(value);
   };
 
   return (
@@ -110,8 +132,11 @@ export default function HouseholdPage() {
           </form>
         ) : (
           <form onSubmit={join} className="space-y-4" noValidate>
-            <Input label="Invite code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="RM-7X92KP" autoCapitalize="characters" hint="Ask the household owner for their invite code." error={error} required />
+            <Input label="Invite code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="RM-7X92KP" autoCapitalize="characters" hint="Ask the household owner for their invite code, or scan their QR." error={error} required />
             <Button type="submit" size="lg" block>Join household</Button>
+            {scanning
+              ? <QrScanner onScan={onScan} onClose={() => setScanning(false)} />
+              : <Button type="button" size="lg" variant="secondary" block onClick={() => setScanning(true)}>Scan QR code</Button>}
           </form>
         )}
       </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useActions } from "@/components/AppActions";
 import { BillCard } from "@/components/dashboard/BillCard";
+import { InviteQR } from "@/components/room/InviteQR";
 import { Button } from "@/components/ui/Button";
 import { Card, SectionHeader } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/BottomSheet";
@@ -53,6 +54,11 @@ export function HouseOverview() {
             {app.canManage && <Button size="sm" variant="secondary" aria-label="Generate new invite code" onClick={() => run(() => roomService.regenerateInvite(household.id), "New invite code generated")}><RefreshCw className="h-4 w-4" /></Button>}
           </div>
         </div>
+        <details className="mt-3 rounded-2xl bg-surface2 p-3.5">
+          <summary className="cursor-pointer text-sm font-bold text-primary">Show QR code</summary>
+          <p className="mt-2 text-xs text-muted">Roommates scan this with Roomies to join {household.name}.</p>
+          <div className="mt-3 flex justify-center"><InviteQR code={household.inviteCode} /></div>
+        </details>
       </Card>
 
       <section><SectionHeader title="Bills" action="All bills" href="/bills" />

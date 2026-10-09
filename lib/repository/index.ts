@@ -1,5 +1,5 @@
 import { DB_VERSION, STORAGE_KEY } from "@/lib/constants";
-import { buildSeed, buildSeedAccess, buildSeedGeo, buildSeedMedia } from "@/lib/mock/seed";
+import { buildSeed } from "@/lib/mock/seed";
 import type { Db } from "@/types";
 
 /**
@@ -20,33 +20,14 @@ export class LocalRepository implements Repository {
       if (raw) {
         const parsed = JSON.parse(raw) as Db;
         if (parsed.version === DB_VERSION) {
-          // Additive migration for data saved before events/gallery existed.
-          if (!parsed.events || !parsed.galleryPhotos) {
-            const media = buildSeedMedia();
-            parsed.events ??= parsed.households.some((h) => h.id === media.events[0].householdId) ? media.events : [];
-            parsed.galleryPhotos ??= parsed.households.some((h) => h.id === media.galleryPhotos[0].householdId) ? media.galleryPhotos : [];
-          }
-          if (!parsed.locations || !parsed.stories) {
-            const geo = buildSeedGeo();
-            const seeded = parsed.households.some((h) => h.id === geo.locations[0].householdId);
-            parsed.locations ??= seeded ? geo.locations : [];
-            parsed.stories ??= [];
-            parsed.households.forEach((h) => { if (h.lat === undefined && seeded && h.id === geo.locations[0].householdId) { h.lat = 12.9352; h.lng = 77.6245; } });
-          }
-          if (!parsed.joinRequests || !parsed.fund || !parsed.galleryFolders) {
-            const seeded = parsed.households.some((h) => h.id === "11111111-1111-4111-8111-111111111111");
-            const access = buildSeedAccess();
-            if (!parsed.joinRequests && seeded) {
-              const fresh = buildSeed();
-              const karan = fresh.users.find((u) => u.email === "karan@roomies.local");
-              if (karan && !parsed.users.some((u) => u.id === karan.id)) parsed.users.push(karan);
-              parsed.joinRequests = fresh.joinRequests;
-            }
-            parsed.joinRequests ??= [];
-            parsed.fund ??= seeded ? access.fund : [];
-            parsed.galleryFolders ??= [];
-          }
-          parsed.users.forEach((u) => { if (u.upiId === undefined && u.email.endsWith("@roomies.local")) u.upiId = `${u.name.toLowerCase()}@okaxis`; });
+          // Additive defaults for data saved before these collections existed.
+          parsed.events ??= [];
+          parsed.galleryPhotos ??= [];
+          parsed.locations ??= [];
+          parsed.stories ??= [];
+          parsed.joinRequests ??= [];
+          parsed.fund ??= [];
+          parsed.galleryFolders ??= [];
           return parsed;
         }
       }

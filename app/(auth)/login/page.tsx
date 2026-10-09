@@ -8,17 +8,9 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Fields";
 import { useToast } from "@/components/ui/Toast";
-import { DEMO_PASSWORD } from "@/lib/constants";
 import { authService } from "@/lib/services";
 import { selectedHouseholdPath } from "@/lib/nav";
 import { useGuard } from "@/hooks/useGuard";
-
-const DEMO = [
-  { name: "Sakthi", role: "Owner", email: "sakthi@roomies.local" },
-  { name: "Devi", role: "Member", email: "devi@roomies.local" },
-  { name: "Arun", role: "Member", email: "arun@roomies.local" },
-  { name: "Rahul", role: "Member", email: "rahul@roomies.local" },
-];
 
 export default function LoginPage() {
   const ok = useGuard("guest-only");
@@ -63,20 +55,6 @@ export default function LoginPage() {
       </form>
       <p className="mt-6 text-center text-sm text-muted">New to Roomies? <Link href="/signup" className="font-bold text-primary">Create an account</Link></p>
 
-      {process.env.NODE_ENV !== "production" && (
-        <section aria-label="Demo accounts" className="mt-8 rounded-3xl border border-dashed border-line bg-surface p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted">Dev · demo accounts</p>
-          <p className="mb-3 mt-1 text-xs text-muted">Password for all: <code className="rounded bg-surface2 px-1.5 py-0.5 font-bold text-ink">{DEMO_PASSWORD}</code></p>
-          <div className="grid grid-cols-2 gap-2">
-            {DEMO.map((d) => (
-              <button key={d.email} type="button" onClick={() => { setEmail(d.email); setPassword(DEMO_PASSWORD); setError(""); }} className="min-h-[52px] rounded-2xl border border-line bg-surface2 px-3 py-2 text-left transition-colors hover:border-primary">
-                <span className="block text-sm font-bold">{d.name}</span>
-                <span className="block text-[11px] text-muted">{d.role} · {d.email}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
     </AuthShell>
   );
 }

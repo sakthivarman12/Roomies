@@ -7,6 +7,11 @@ import { FULL_ACCESS, type Household, type JoinRequest, type MemberKind } from "
 import { mutate, mutateUser, notify, ServiceError } from "./context";
 import type { HouseholdInput, RoomService } from "./types";
 
+/** Invite codes are compared ignoring case, spaces and dashes ("rm l5hf-8c" === "RM-L5HF8C"). */
+export function normalizeCode(code: string): string {
+  return code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
 function validate(input: Partial<HouseholdInput>) {
   if (input.name !== undefined && input.name.trim().length < 2) throw new ServiceError("Give your household a name.");
   if (input.monthlyRent !== undefined && (Number.isNaN(input.monthlyRent) || input.monthlyRent < 0)) {
@@ -45,9 +50,11 @@ export const localRoomService: RoomService = {
 
   joinByCode(code) {
     return mutateUser((db, user) => {
-      const invite = db.invites.find((i) => i.code.toUpperCase() === code.trim().toUpperCase());
-      if (!invite) throw new ServiceError("That invite code doesn't match any household.");
-      const household = db.households.find((h) => h.id === invite.householdId)!;
+      const wanted = normalizeCode(code);
+      const invite = db.invites.find((i) => normalizeCode(i.code) === wanted);
+      const household = db.households.find((h) => normalizeCode(h.inviteCode) === wanted)
+        ?? (invite ? db.households.find((h) => h.id === invite.householdId) : undefined);
+      if (!household) throw new ServiceError("That invite code doesn't match any household.");
       if (db.members.some((m) => m.householdId === household.id && m.userId === user.id)) {
         db.session.householdId = household.id;
         return { household, status: "joined" as const };

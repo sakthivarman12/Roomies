@@ -1,7 +1,7 @@
 import type { ExpenseCategory, PaymentMethod } from "@/types";
 
 export const STORAGE_KEY = "roomies.db.v1";
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 
 export const CATEGORIES: ExpenseCategory[] = [
   "Rent", "Electricity", "Water", "Internet", "Groceries", "Food",
