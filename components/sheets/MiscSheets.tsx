@@ -53,7 +53,7 @@ export function MemberSheet({ open, onClose }: SheetProps) {
   useOnOpen(open, () => { setName(""); setEmail(""); setKind("resident"); setError(""); });
   if (!app) return null;
   const submit = () => {
-    try { roomService.addMember(app.household.id, { name, email, kind }); toast.show(`${name || (kind === "guest" ? "Friend" : "Roommate")} added`); onClose(); }
+    try { roomService.addMember(app.household.id, { name, email, kind }); toast.show(`${name || (kind === "guest" ? "Friend" : "Roommate")} sent for owner approval`); onClose(); }
     catch (err) { setError(err instanceof Error ? err.message : "Couldn't add member."); }
   };
   return (

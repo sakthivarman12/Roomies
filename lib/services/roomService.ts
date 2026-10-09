@@ -3,7 +3,7 @@ import { assert, canChangeRoles, canManageHousehold, canManageMembers, roleOf } 
 import { currentHousehold, myHouseholds } from "@/lib/selectors";
 import { dbStore } from "@/store/db";
 import { inviteCode, mockHash, nowIso, uid } from "@/lib/utils";
-import { FULL_ACCESS, type Household, type HouseholdMember, type JoinRequest, type MemberKind } from "@/types";
+import { FULL_ACCESS, type Household, type JoinRequest, type MemberKind } from "@/types";
 import { mutate, mutateUser, notify, ServiceError } from "./context";
 import type { HouseholdInput, RoomService } from "./types";
 
@@ -75,7 +75,7 @@ export const localRoomService: RoomService = {
       req.status = "approved";
       if (!db.members.some((m) => m.householdId === req.householdId && m.userId === req.userId)) {
         db.members.push({
-          id: uid(), householdId: req.householdId, userId: req.userId, role: "MEMBER", kind: input.kind,
+          id: uid(), householdId: req.householdId, userId: req.userId, role: "MEMBER", kind: input.kind ?? req.kind ?? "resident",
           restrictions: input.restrictions, stayUntil: input.stayUntil, joinedAt: nowIso(),
         });
       }
@@ -127,6 +127,7 @@ export const localRoomService: RoomService = {
   },
 
   addMember(householdId, { name, email, kind = "resident" }: { name: string; email: string; kind?: MemberKind }) {
+    // Nobody joins directly: the person is queued as a pending request until the owner or an admin approves.
     return mutateUser((db, user) => {
       assert(canManageMembers(db, user, householdId), "Only owners and admins can add members.");
       const mail = email.trim().toLowerCase();
@@ -144,10 +145,15 @@ export const localRoomService: RoomService = {
       if (db.members.some((m) => m.householdId === householdId && m.userId === target!.id)) {
         throw new ServiceError(`${target.name} is already in this household.`);
       }
-      const member: HouseholdMember = { id: uid(), householdId, userId: target.id, role: "MEMBER", joinedAt: nowIso(), kind };
-      db.members.push(member);
-      notify(db, householdId, [target.id], "announcement", "Welcome to the household", kind === "guest" ? `${user.name} added you as a friend` : `${user.name} added you`);
-      return member;
+      if (db.joinRequests.some((r) => r.householdId === householdId && r.userId === target!.id && r.status === "pending")) {
+        throw new ServiceError(`${target.name} is already waiting for approval.`);
+      }
+      const request: JoinRequest = { id: uid(), householdId, userId: target.id, kind, status: "pending", createdAt: nowIso() };
+      db.joinRequests.push(request);
+      const approvers = db.members.filter((m) => m.householdId === householdId && (m.role === "OWNER" || m.role === "ADMIN")).map((m) => m.userId);
+      const label = kind === "guest" ? "friend" : "roommate";
+      notify(db, householdId, approvers, "join_request", `New ${label} to approve`, `${user.name} added ${target.name} as a ${label}. Approve in Profile.`);
+      return request;
     });
   },
 

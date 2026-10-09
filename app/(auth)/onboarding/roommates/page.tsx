@@ -28,7 +28,7 @@ export default function RoommatesStep() {
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
-    const res = run(() => roomService.addMember(app.household.id, { name, email, kind }), `${name || (kind === "guest" ? "Friend" : "Roommate")} added`);
+    const res = run(() => roomService.addMember(app.household.id, { name, email, kind }), `${name || (kind === "guest" ? "Friend" : "Roommate")} sent for owner approval`);
     if (res) { setName(""); setEmail(""); setKind("resident"); }
   };
   const copy = async () => {

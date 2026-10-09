@@ -75,6 +75,8 @@ export interface JoinRequest {
   householdId: ID;
   userId: ID;
   note?: string;
+  /** Set when an owner/admin adds someone directly; used as the default type when approving. */
+  kind?: MemberKind;
   status: "pending" | "approved" | "rejected";
   createdAt: ISODate;
 }

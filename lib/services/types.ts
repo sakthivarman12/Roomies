@@ -1,6 +1,6 @@
 import type {
   Announcement, Bill, EventItem, FundEntry, GalleryFolder, JoinRequest, MemberKind, Restrictions, GalleryPhoto, MemberLocation, RsvpStatus, Story, Chore, Db, Expense, ExpenseCategory, ExpenseSplit, Frequency, Household,
-  HouseholdMember, PaymentMethod, Preferences, Priority, Receipt, Role, ShoppingItem, SplitMode, User,
+  PaymentMethod, Preferences, Priority, Receipt, Role, ShoppingItem, SplitMode, User,
 } from "@/types";
 import type { ThemePrefs } from "@/lib/theme";
 
@@ -41,7 +41,7 @@ export interface RoomService {
   getPendingRequests(): JoinRequest[];
   switchHousehold(id: string): void;
   updateHousehold(id: string, patch: Partial<HouseholdInput>): Household;
-  addMember(householdId: string, input: { name: string; email: string; kind?: MemberKind }): HouseholdMember;
+  addMember(householdId: string, input: { name: string; email: string; kind?: MemberKind }): JoinRequest;
   removeMember(householdId: string, userId: string): void;
   changeRole(householdId: string, userId: string, role: Role): void;
   leaveHousehold(householdId: string): void;
