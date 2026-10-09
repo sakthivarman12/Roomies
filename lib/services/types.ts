@@ -41,7 +41,7 @@ export interface RoomService {
   getPendingRequests(): JoinRequest[];
   switchHousehold(id: string): void;
   updateHousehold(id: string, patch: Partial<HouseholdInput>): Household;
-  addMember(householdId: string, input: { name: string; email: string }): HouseholdMember;
+  addMember(householdId: string, input: { name: string; email: string; kind?: MemberKind }): HouseholdMember;
   removeMember(householdId: string, userId: string): void;
   changeRole(householdId: string, userId: string, role: Role): void;
   leaveHousehold(householdId: string): void;

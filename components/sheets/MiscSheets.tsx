@@ -8,8 +8,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Fields";
+import { SegmentedControl } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
 import { useApp } from "@/hooks/useApp";
+import type { MemberKind } from "@/types";
 import { authService, houseService, roomService } from "@/lib/services";
 import { cn } from "@/lib/utils";
 
@@ -46,17 +48,19 @@ export function MemberSheet({ open, onClose }: SheetProps) {
   const toast = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [kind, setKind] = useState<MemberKind>("resident");
   const [error, setError] = useState("");
-  useOnOpen(open, () => { setName(""); setEmail(""); setError(""); });
+  useOnOpen(open, () => { setName(""); setEmail(""); setKind("resident"); setError(""); });
   if (!app) return null;
   const submit = () => {
-    try { roomService.addMember(app.household.id, { name, email }); toast.show(`${name || "Roommate"} added`); onClose(); }
+    try { roomService.addMember(app.household.id, { name, email, kind }); toast.show(`${name || (kind === "guest" ? "Friend" : "Roommate")} added`); onClose(); }
     catch (err) { setError(err instanceof Error ? err.message : "Couldn't add member."); }
   };
   return (
     <BottomSheet open={open} onClose={onClose} title="Add roommate" description={`Join ${app.household.name} directly, or share the code ${app.household.inviteCode}`}
       footer={<Button size="lg" block onClick={submit}>Add roommate</Button>}>
       <div className="space-y-4 pb-2 pt-2">
+        <SegmentedControl<MemberKind> label="Is this a roommate or a friend?" value={kind} onChange={setKind} options={[{ value: "resident", label: "Roommate" }, { value: "guest", label: "Friend (visiting)" }]} />
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Priya" />
         <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="priya@mail.com" />
         <p className="px-1 text-xs text-muted">Prototype: new accounts start with the password <b>roomies123</b>.</p>

@@ -1,7 +1,5 @@
-/**
- * Placeholder Supabase client factory. Intentionally has NO dependency on @supabase/supabase-js yet,
- * so the app builds and runs without credentials. Install `@supabase/supabase-js` and replace the body later.
- */
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
 export interface SupabaseConfig {
   url: string;
   anonKey: string;
@@ -15,4 +13,14 @@ export function getSupabaseConfig(): SupabaseConfig | null {
 
 export function isSupabaseConfigured(): boolean {
   return getSupabaseConfig() !== null;
+}
+
+let client: SupabaseClient | null = null;
+
+/** Browser Supabase client, or null when the URL/anon key aren't set (the app then runs on localStorage only). */
+export function getSupabaseClient(): SupabaseClient | null {
+  const config = getSupabaseConfig();
+  if (!config) return null;
+  client ??= createClient(config.url, config.anonKey, { auth: { persistSession: false } });
+  return client;
 }

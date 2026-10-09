@@ -2,13 +2,23 @@
 
 import { useSyncExternalStore } from "react";
 import { repository } from "@/lib/repository";
+import { pushDb, startSync } from "@/lib/supabase/sync";
 import type { Db } from "@/types";
 
 let state: Db | null = null;
 const listeners = new Set<() => void>();
+let syncStarted = false;
 
 function ensure(): Db {
   if (!state) state = repository.load();
+  if (!syncStarted && typeof window !== "undefined") {
+    syncStarted = true;
+    startSync(state, (remote) => {
+      state = remote;
+      repository.save(remote);
+      emit();
+    });
+  }
   return state;
 }
 
@@ -26,11 +36,13 @@ export const dbStore = {
     const result = fn(draft);
     state = draft;
     repository.save(draft);
+    pushDb(draft);
     emit();
     return result;
   },
   reset() {
     state = repository.reset();
+    pushDb(state);
     emit();
   },
   subscribe(l: () => void) {

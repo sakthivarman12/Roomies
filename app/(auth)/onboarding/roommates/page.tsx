@@ -8,9 +8,11 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Fields";
+import { SegmentedControl } from "@/components/ui/Tabs";
 import { useAction } from "@/hooks/useAction";
 import { useApp } from "@/hooks/useApp";
 import { useGuard } from "@/hooks/useGuard";
+import type { MemberKind } from "@/types";
 import { roomService } from "@/lib/services";
 
 export default function RoommatesStep() {
@@ -20,13 +22,14 @@ export default function RoommatesStep() {
   const run = useAction();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [kind, setKind] = useState<MemberKind>("resident");
   const [copied, setCopied] = useState(false);
   if (!ok || !app) return null;
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
-    const res = run(() => roomService.addMember(app.household.id, { name, email }), `${name || "Roommate"} added`);
-    if (res) { setName(""); setEmail(""); }
+    const res = run(() => roomService.addMember(app.household.id, { name, email, kind }), `${name || (kind === "guest" ? "Friend" : "Roommate")} added`);
+    if (res) { setName(""); setEmail(""); setKind("resident"); }
   };
   const copy = async () => {
     try { await navigator.clipboard.writeText(app.household.inviteCode); } catch { /* clipboard unavailable */ }
@@ -45,6 +48,7 @@ export default function RoommatesStep() {
       </Card>
 
       <form onSubmit={add} className="mt-5 space-y-3" noValidate>
+        <SegmentedControl<MemberKind> label="Is this a roommate or a friend?" value={kind} onChange={setKind} options={[{ value: "resident", label: "Roommate" }, { value: "guest", label: "Friend (visiting)" }]} />
         <div className="grid grid-cols-2 gap-3">
           <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Devi" />
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="devi@mail.com" />

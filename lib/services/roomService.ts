@@ -3,7 +3,7 @@ import { assert, canChangeRoles, canManageHousehold, canManageMembers, roleOf } 
 import { currentHousehold, myHouseholds } from "@/lib/selectors";
 import { dbStore } from "@/store/db";
 import { inviteCode, mockHash, nowIso, uid } from "@/lib/utils";
-import { FULL_ACCESS, type Household, type HouseholdMember, type JoinRequest } from "@/types";
+import { FULL_ACCESS, type Household, type HouseholdMember, type JoinRequest, type MemberKind } from "@/types";
 import { mutate, mutateUser, notify, ServiceError } from "./context";
 import type { HouseholdInput, RoomService } from "./types";
 
@@ -126,7 +126,7 @@ export const localRoomService: RoomService = {
     });
   },
 
-  addMember(householdId, { name, email }) {
+  addMember(householdId, { name, email, kind = "resident" }: { name: string; email: string; kind?: MemberKind }) {
     return mutateUser((db, user) => {
       assert(canManageMembers(db, user, householdId), "Only owners and admins can add members.");
       const mail = email.trim().toLowerCase();
@@ -144,9 +144,9 @@ export const localRoomService: RoomService = {
       if (db.members.some((m) => m.householdId === householdId && m.userId === target!.id)) {
         throw new ServiceError(`${target.name} is already in this household.`);
       }
-      const member: HouseholdMember = { id: uid(), householdId, userId: target.id, role: "MEMBER", joinedAt: nowIso() };
+      const member: HouseholdMember = { id: uid(), householdId, userId: target.id, role: "MEMBER", joinedAt: nowIso(), kind };
       db.members.push(member);
-      notify(db, householdId, [target.id], "announcement", "Welcome to the household", `${user.name} added you`);
+      notify(db, householdId, [target.id], "announcement", "Welcome to the household", kind === "guest" ? `${user.name} added you as a friend` : `${user.name} added you`);
       return member;
     });
   },
