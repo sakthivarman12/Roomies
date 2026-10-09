@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Fields";
 import { SegmentedControl } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
+import { InviteQR } from "@/components/room/InviteQR";
 import { useApp } from "@/hooks/useApp";
 import type { MemberKind } from "@/types";
 import { authService, houseService, roomService } from "@/lib/services";
@@ -60,6 +61,11 @@ export function MemberSheet({ open, onClose }: SheetProps) {
     <BottomSheet open={open} onClose={onClose} title="Add roommate" description={`Join ${app.household.name} directly, or share the code ${app.household.inviteCode}`}
       footer={<Button size="lg" block onClick={submit}>Add roommate</Button>}>
       <div className="space-y-4 pb-2 pt-2">
+        <div className="flex flex-col items-center gap-2 rounded-2xl bg-surface2 p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Scan to join</p>
+          <InviteQR code={app.household.inviteCode} size={160} />
+          <p className="text-sm font-black tracking-[0.12em] text-primary">{app.household.inviteCode}</p>
+        </div>
         <SegmentedControl<MemberKind> label="Is this a roommate or a friend?" value={kind} onChange={setKind} options={[{ value: "resident", label: "Roommate" }, { value: "guest", label: "Friend (visiting)" }]} />
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Priya" />
         <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="priya@mail.com" />
