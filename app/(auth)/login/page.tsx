@@ -30,9 +30,11 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setBusy(true);
+    console.log("[debug] login submit", { configured: isSupabaseConfigured() });
     if (isSupabaseConfigured()) {
       try {
         await remoteSignIn(email, password);
+        console.log("[debug] login ok, reloading");
         // Full reload so the store re-syncs with the signed-in user's rows.
         window.location.assign("/");
       } catch (err) {
