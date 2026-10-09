@@ -1,11 +1,15 @@
-import { AVATAR_COLORS } from "@/lib/constants";
+import { AVATAR_COLORS, PROTECTED_EMAIL } from "@/lib/constants";
 import { assert, canChangeRoles, canManageHousehold, canManageMembers, roleOf } from "@/lib/permissions";
 import { currentHousehold, myHouseholds } from "@/lib/selectors";
 import { dbStore } from "@/store/db";
 import { inviteCode, nowIso, uid } from "@/lib/utils";
-import { FULL_ACCESS, type Household, type JoinRequest, type MemberKind } from "@/types";
+import { FULL_ACCESS, type Db, type Household, type JoinRequest, type MemberKind } from "@/types";
 import { mutate, mutateUser, notify, ServiceError } from "./context";
 import type { HouseholdInput, RoomService } from "./types";
+
+function isProtectedUser(db: Db, userId: string): boolean {
+  return db.users.find((u) => u.id === userId)?.email.toLowerCase() === PROTECTED_EMAIL;
+}
 
 /** Invite codes are compared ignoring case, spaces and dashes ("rm l5hf-8c" === "RM-L5HF8C"). */
 export function normalizeCode(code: string): string {
@@ -167,7 +171,7 @@ export const localRoomService: RoomService = {
     mutateUser((db, user) => {
       assert(canManageMembers(db, user, householdId), "Only owners and admins can remove members.");
       const role = roleOf(db, userId, householdId);
-      if (role === "OWNER") throw new ServiceError("The owner can't be removed.");
+      if (isProtectedUser(db, userId)) throw new ServiceError("This account can't be removed.");
       if (role === "ADMIN" && roleOf(db, user.id, householdId) !== "OWNER") {
         throw new ServiceError("Only the owner can remove an admin.");
       }
@@ -183,8 +187,7 @@ export const localRoomService: RoomService = {
       assert(canChangeRoles(db, user, householdId), "Only the owner can change roles.");
       const m = db.members.find((x) => x.householdId === householdId && x.userId === userId);
       if (!m) throw new ServiceError("Member not found.");
-      if (m.role === "OWNER") throw new ServiceError("The owner's role can't be changed.");
-      if (role === "OWNER") throw new ServiceError("There can only be one owner.");
+      if (isProtectedUser(db, userId)) throw new ServiceError("This account's role can't be changed.");
       m.role = role;
     });
   },
@@ -194,8 +197,9 @@ export const localRoomService: RoomService = {
       const role = roleOf(db, user.id, householdId);
       if (!role) throw new ServiceError("You're not in that household.");
       const others = db.members.filter((m) => m.householdId === householdId && m.userId !== user.id);
-      if (role === "OWNER" && others.length > 0) {
-        throw new ServiceError("Transfer ownership by promoting another member before leaving.");
+      if (isProtectedUser(db, user.id)) throw new ServiceError("This account can't leave the household.");
+      if (role === "OWNER" && others.length > 0 && !others.some((m) => m.role === "OWNER")) {
+        throw new ServiceError("Promote another RM before leaving.");
       }
       db.members = db.members.filter((m) => !(m.householdId === householdId && m.userId === user.id));
       const next = myHouseholds(db, user.id)[0];
@@ -222,6 +226,6 @@ export function transferOwnership(householdId: string, userId: string): void {
     const mine = db.members.find((m) => m.householdId === householdId && m.userId === me);
     if (!target || !mine) throw new ServiceError("Member not found.");
     target.role = "OWNER";
-    mine.role = "ADMIN";
+    if (!isProtectedUser(db, me!)) mine.role = "ADMIN";
   });
 }

@@ -42,4 +42,6 @@ export const GROUP_COLOR: Record<string, string> = {
 };
 
 export const AVATAR_COLORS = ["#4f46e5", "#0d9488", "#db2777", "#ea580c", "#7c3aed", "#0284c7"];
+/** This account always stays RM: it can't be removed, demoted, or left out of the household. */
+export const PROTECTED_EMAIL = "sakthivarman@gmail.com";
 export const TAGLINE = "Live together. Split smarter.";

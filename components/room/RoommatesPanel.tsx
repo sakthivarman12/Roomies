@@ -16,6 +16,7 @@ import { money, relativeTime } from "@/lib/format";
 import { netBalance } from "@/lib/selectors";
 import { roomService, transferOwnership } from "@/lib/services";
 import { roleLabel } from "@/lib/roleLabel";
+import { PROTECTED_EMAIL } from "@/lib/constants";
 import type { Role } from "@/types";
 
 const ROLE_TONE = { OWNER: "violet", ADMIN: "info", MEMBER: "neutral" } as const;
@@ -57,7 +58,7 @@ export function RoommatesPanel() {
               </div>
             </Link>
             {user.id !== app.user.id && <ContactButtons name={user.name} phone={user.phone} size="sm" className="shrink-0" />}
-            {app.canManage && user.id !== app.user.id && member.role !== "OWNER" && (
+            {app.canManage && user.id !== app.user.id && user.email.toLowerCase() !== PROTECTED_EMAIL && (
               <button onClick={() => setManage(user.id)} aria-label={`Manage ${user.name}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface2"><MoreVertical className="h-5 w-5" /></button>
             )}
           </Card>
@@ -69,10 +70,10 @@ export function RoommatesPanel() {
           <div className="space-y-2.5 pb-3">
             {app.isOwner && (
               <>
-                {(["MEMBER", "ADMIN"] as Role[]).map((r) => (
+                {(["MEMBER", "ADMIN", "OWNER"] as Role[]).map((r) => (
                   <Button key={r} variant={target.member.role === r ? "soft" : "secondary"} block disabled={target.member.role === r}
-                    onClick={() => { run(() => roomService.changeRole(app.household.id, target.user.id, r), `${target.user.name} is now ${r === "ADMIN" ? "an admin" : "a member"}`); setManage(null); }}>
-                    {target.member.role === r ? `Currently ${r.toLowerCase()}` : `Make ${r === "ADMIN" ? "admin" : "member"}`}
+                    onClick={() => { run(() => roomService.changeRole(app.household.id, target.user.id, r), `${target.user.name} is now ${r === "OWNER" ? "RM" : r === "ADMIN" ? "an admin" : "a member"}`); setManage(null); }}>
+                    {target.member.role === r ? `Currently ${roleLabel(r)}` : `Make ${r === "OWNER" ? "RM" : r === "ADMIN" ? "admin" : "member"}`}
                   </Button>
                 ))}
                 <Button variant="secondary" block onClick={() => { run(() => transferOwnership(app.household.id, target.user.id), `${target.user.name} is the new owner`); setManage(null); }}><Crown className="h-4 w-4" />Transfer ownership</Button>
